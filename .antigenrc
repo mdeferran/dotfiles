@@ -1,0 +1,19 @@
+# Antigen Bundles
+antigen bundle robbyrussell/oh-my-zsh lib/
+antigen bundle tmux
+antigen bundle git
+antigen bundle rupa/z
+antigen bundle olivierverdier/zsh-git-prompt
+antigen bundle joel-porquet/zsh-dircolors-solarized.git
+antigen bundle docker
+
+# Python Plugins
+antigen bundle pip
+antigen bundle python
+antigen bundle virtualenv
+
+# Antigen Theme
+antigen bundle /home/mdeferran/.zsh/themes/mdeferran --btype=theme --no-local-clone
+antigen theme mdeferran
+
+antigen apply

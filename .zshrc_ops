@@ -1,0 +1,3 @@
+# Default AWS environment
+export AWS_PROFILE="dev"
+

@@ -1,0 +1,54 @@
+# Download shortcut
+alias dload="curl --remote-name  --progress --location"
+
+# Edit TODO file
+alias todo="vim $HOME/REPOS/doc/portfolio/TODO.txt"
+
+# Rerun with sudo
+alias please='sudo $(fc -ln -1)'
+
+# Spawn an editor on a temp file
+# alias vit="vim =(...)"
+# Replaced by CTRL-X CTRL-E
+
+# Newest file and newest dir aliases
+alias -g ND='*(/om[1])' # newest directory
+alias -g NF='*(.om[1])' # newest file
+
+# Inline aliases less and grep
+alias -g G='| grep -'
+alias -g L='| less'
+
+# Sort by cpu and mem usage
+function psc {
+  ps --cols=1000 --sort='-%cpu,uid,pgid,ppid,pid' -e \
+     -o user,pid,ppid,pgid,stime,stat,wchan,time,pcpu,pmem,vsz,rss,sz,args |
+     sed 's/^/ /' | less
+}
+
+function psm {
+  ps --cols=1000 --sort='-vsz,uid,pgid,ppid,pid' -e \
+     -o user,pid,ppid,pgid,stime,stat,wchan,time,pcpu,pmem,vsz,rss,sz,args |
+     sed 's/^/ /' | less
+}
+
+# Display time in several locations
+function worldclock() {
+    SEATTLE=`TZ=America/Los_Angeles date +"%c (%z %Z)"`
+    NEW_YORK=`TZ=America/New_York date +"%c (%z %Z)"`
+    LONDON=`TZ=Europe/London date +"%c (%z %Z)"`
+    PARIS=`TZ=Europe/Paris date +"%c (%z %Z)"`
+    TOKYO=`TZ=Asia/Tokyo date +"%c (%z %Z)"`
+    UTC=`TZ=UTC date +"%c (%z %Z)"`
+    echo "Seattle            $SEATTLE"
+    echo "New York           $NEW_YORK"
+    echo "London             $LONDON"
+    echo "Paris              $PARIS"
+    echo "Tokyo              $TOKYO"
+    echo "UTC                $UTC"
+}
+
+# List and find helpers
+alias ll='ls -alrt'      #long list
+alias fd='find . -type d -name'
+alias ff='find . -type f -name'

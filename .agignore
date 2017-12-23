@@ -1,0 +1,16 @@
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.mpg
+*.mpeg
+*.cur
+*.ico
+*.psd
+*.mp3
+*.mp4
+*.pdf
+.git/
