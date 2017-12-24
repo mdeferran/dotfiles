@@ -35,7 +35,7 @@ if has('mouse')
 endif
 
 " Copy highligh text to clipboard (CTRL-SHIFT V to paste to term)
-vmap <C-c> "+y
+vmap <C-c> "*y
 
 " * Plugins vim-plug
 " For NeoVim use call plug#begin('~/.local/share/nvim/plugged')
@@ -115,31 +115,33 @@ let mapleader=","
 " Disable Q ex-mode
 nnoremap Q <Nop>
 
-" ALT key to operate on Windows and buffers
 " Resume editing from Vim-Vinegar/NetRW
-nnoremap <A-q> :Rex<CR>
+nnoremap <leader>q :Rex<CR>
 
 " Go to next buffer
-nnoremap <A-x> :bnext<CR>
+nnoremap <C-i> :bnext<CR>
 
 " Go to previous buffer
-nnoremap <A-w> :bprev<CR>
+nnoremap <C-u> :bprev<CR>
 
 " Close quickfix easily
-nnoremap <A-a> :cclose<CR>
+nnoremap <leader>c :cclose<CR>
 
 " Move between windows
-nnoremap <A-j> <C-W>j
-nnoremap <A-k> <C-W>k
-nnoremap <A-h> <C-W>h
-nnoremap <A-l> <C-W>l
+nnoremap <C-j> <C-W>j
+nnoremap <C-k> <C-W>k
+nnoremap <C-h> <C-W>h
+nnoremap <C-l> <C-W>l
 
 " Split windows
-nnoremap <A-s> :sp<CR>
-nnoremap <A-v> :vsp<CR>
+nnoremap <leader>j :sp<CR>
+nnoremap <leader>l :vsp<CR>
+
+" Maximize current window
+nnoremap <C-m> <C-W>_
 
 " Super search buffers with ctrlp
-nnoremap <A-/> :CtrlPLine<CR>
+nnoremap <C-Home> :CtrlPLine<CR>
 
 " Leader when editing a buffer
 " ESC when double leader
@@ -240,8 +242,6 @@ endif
 
 " YAML
 autocmd FileType yaml set filetype=ansible
-
-" TODO CLIPBOARD
 
 " TODO * pyflakes (not installed yet)
 highlight SpellBad term=underline gui=undercurl guisp=Red
