@@ -211,6 +211,20 @@ EOF
     sudo apt install -y gnupg gnupg2 gnupg-agent scdaemon
 }
 
+# install i3
+setup_wm() {
+    lazy_update
+    sudo apt install -y i3 i3lock i3status scrot suckless-tools \
+	xfonts-terminus sakura rxvt-unicode-256color --no-install-recommends
+
+    # alias vim dotfiles to neovim
+    mkdir -p "${XDG_CONFIG_HOME:=$HOME/.config}"
+    ln -snf "${DIRSELF}/.config/i3" "${XDG_CONFIG_HOME}/i3"
+    ln -snf "${DIRSELF}/.config/sakura" "${XDG_CONFIG_HOME}/sakura"
+
+    sudo update-alternatives --install /usr/bin/x-window-manager x-window-manager /usr/bin/i3 20
+}
+
 # install go playground
 setup_go() {
     # add GO env to .zshrc
