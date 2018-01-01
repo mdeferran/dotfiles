@@ -57,7 +57,7 @@ lazy_update() {
 link_to_home() {
     local files=("$@")
     [ ${#files[@]} -eq 0 ] && return 1
-    for src in "${files[@]}"; do 
+    for src in "${files[@]}"; do
         fp_src="${DIRSELF}/${src}"
         if [ -e "$fp_src" ]; then
             ln -snf "$fp_src" "$HOME"
@@ -193,22 +193,28 @@ EOF
 
 # install crypto things
 setup_gpg() {
-    cat <<-EOF > tee -a /etc/apt/sources.list.d/yubiko.list
+    cat <<-EOF | sudo tee -a /etc/apt/sources.list.d/yubiko.list
     # yubico
     deb http://ppa.launchpad.net/yubico/stable/ubuntu xenial main
     deb-src http://ppa.launchpad.net/yubico/stable/ubuntu xenial main
-
-    # tlp: Advanced Linux Power Management
-    # http://linrunner.de/en/tlp/docs/tlp-linux-advanced-power-management.html
-    deb http://repo.linrunner.de/debian sid main
 EOF
 
     # add the yubico ppa gpg key
     sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 3653E21064B19D134466702E43D5C49532CBA1A9
 
+    # TODO yubico-piv-tool ykpersonalize ykman
+    # https://github.com/drduh/YubiKey-Guide
+
     # install packages
     sudo apt update
     sudo apt install -y gnupg gnupg2 gnupg-agent scdaemon
+
+    # use GPG agent as SSH agent
+    sudo sed -i "s/^use-ssh-agent/# use-ssh-agent/" /etc/X11/Xsession.options
+    link_to_home .zshrc_gpg
+    install -d ${HOME}/.gnupg
+    ln -snf "${DIRSELF}/.gnupg/gpg-agent.conf" "${HOME}/.gnupg/"
+    ln -snf "${DIRSELF}/.gnupg/gpg.conf" "${HOME}/.gnupg/"
 }
 
 # install i3
