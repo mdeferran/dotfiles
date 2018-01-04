@@ -118,12 +118,13 @@ focus_follows_mouse no
 workspace_auto_back_and_forth yes
 
 # press $mod++Shift+s s or f to take a screen shot
-set $mode_screenshot Screenshot [s]election [f]ullscreen
+set $mode_screenshot Screenshot [s]election [f]ullscreen [w]indow
 bindsym $mod+Shift+s mode "$mode_screenshot"
 
 mode "$mode_screenshot" {
-    bindsym s exec maim -s ~/tmp/screenshot-$(date +%F-%H%M%S).png, mode "default"
-    bindsym f exec maim ~/tmp/screenshot-$(date +%F-%H%M%S).png, mode "default"
+    bindsym --release s exec scrot -s ${HOME}/tmp/screenshot-$(date +%F-%H%M%S).png, mode "default"
+    bindsym f exec scrot ${HOME}/tmp/screenshot-$(date +%F-%H%M%S).png, mode "default"
+    bindsym w exec scrot -u ${HOME}/tmp/screenshot-$(date +%F-%H%M%S).png, mode "default"
 
     bindsym Return mode "default"
     bindsym Escape mode "default"
