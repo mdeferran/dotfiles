@@ -101,6 +101,8 @@ setup_base() {
         --no-install-recommends
 
     link_to_home .gitconfig .tmux.conf .agignore
+
+    link_to_home .zshrc_helpers
 }
 
 # install ZSH
