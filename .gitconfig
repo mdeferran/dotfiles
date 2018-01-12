@@ -71,7 +71,7 @@
         # rebase = true
         # WARNING! This option, which does away with the one gotcha of
         # auto-rebasing on pulls, is only available from 1.8.5 onwards.
-        rebase = preserve
+        rebase = true
 
 [push]
         default = upstream
@@ -90,3 +90,6 @@
 
 [tag]
         sort = version:refname
+[gitreview]
+	remote = origin
+	username = manuel.deferran
