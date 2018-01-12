@@ -239,8 +239,11 @@ setup_go() {
     link_to_home .zshrc_go
 }
 
-# install ops: ansible, awscli
+# install ops: ansible, awscli, awless
 setup_ops() {
+    # Install from Github
+    go get -u github.com/wallix/awless
+
     # add AWS and ansible env to .zshrc
     link_to_home .zshrc_ops
 }
@@ -278,6 +281,8 @@ main() {
 
     elif [[ $cmd == "extra" ]]; then
         setup_gpg
+        setup_go
+        setup_ops
 
     elif [[ $cmd == "clean" ]]; then
         clean_home

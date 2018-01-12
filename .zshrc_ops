@@ -1,3 +1,5 @@
 # Default AWS environment
 export AWS_PROFILE="dev"
 
+# Load awless completion
+which awless > /dev/null 2>&1 && source <(awless completion zsh)
