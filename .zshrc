@@ -32,3 +32,6 @@ unset subdot;
 
 # Source local extra (private) settings specific to machine if it exists
 [ -e ~/.zsh.local ] && source ~/.zsh.local
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+export FZF_DEFAULT_COMMAND='ag --hidden --ignore .git  -g ""'
