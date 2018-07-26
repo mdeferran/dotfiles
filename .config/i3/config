@@ -110,6 +110,7 @@ exec --no-startup-id i3-msg 'workspace 2; exec sakura'
 
 # bind applications to workspace
 assign [class="Google-chrome"] 1
+assign [class="vlc"] 9
 
 # no mouse focus
 focus_follows_mouse no

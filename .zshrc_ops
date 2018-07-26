@@ -3,3 +3,6 @@ export AWS_PROFILE="dev"
 
 # Load awless completion
 which awless > /dev/null 2>&1 && source <(awless completion zsh)
+
+# Load kubectl completion
+which kubectl > /dev/null 2>&1 && source <(kubectl completion zsh)

@@ -209,7 +209,7 @@ EOF
 
     # install packages
     sudo apt update
-    sudo apt install -y gnupg gnupg2 gnupg-agent scdaemon
+    sudo apt install -y gnupg gnupg2 gnupg-agent scdaemon pcscd
 
     # use GPG agent as SSH agent
     sudo sed -i "s/^use-ssh-agent/# use-ssh-agent/" /etc/X11/Xsession.options
