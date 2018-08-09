@@ -33,8 +33,8 @@ DIRSELF="$(get_script_dir)"
 
 # remove default junk
 clean_home() {
-    rmdir Videos Pictures Public Music
-    rm -f examples.desktop
+    (cd $HOME; rmdir Videos Pictures Public Music Documents Templates;
+    rm -f examples.desktop)
 }
 
 # test command rc with euxo mode on
@@ -144,8 +144,8 @@ setup_python() {
 setup_neovim() {
     # add pkg repo
     cat <<-EOF | sudo tee /etc/apt/sources.list.d/neovim.list
-    deb http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu xenial main
-    deb-src http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu xenial main
+    deb http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu $(lsb_release -cs) main
+    deb-src http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu $(lsb_release -cs) main
 EOF
 
     # add the git-core ppa gpg key
@@ -156,7 +156,7 @@ EOF
 
     # actually install the package
     sudo apt update
-    sudo apt install -y neovim
+    sudo apt install -y neovim xclip
 
     # install .vimrc files
     link_to_home .vimrc
@@ -197,8 +197,8 @@ EOF
 setup_gpg() {
     cat <<-EOF | sudo tee -a /etc/apt/sources.list.d/yubiko.list
     # yubico
-    deb http://ppa.launchpad.net/yubico/stable/ubuntu xenial main
-    deb-src http://ppa.launchpad.net/yubico/stable/ubuntu xenial main
+    deb http://ppa.launchpad.net/yubico/stable/ubuntu $(lsb_release -cs) main
+    deb-src http://ppa.launchpad.net/yubico/stable/ubuntu $(lsb_release -cs) main
 EOF
 
     # add the yubico ppa gpg key
