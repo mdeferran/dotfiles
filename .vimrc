@@ -86,6 +86,8 @@ Plug 'zchee/deoplete-jedi'
 
 " Go
 Plug 'fatih/vim-go'
+Plug 'mdempsky/gocode', { 'rtp': 'nvim', 'do': '~/.vim/plugged/gocode/nvim/symlink.sh' }
+Plug 'zchee/deoplete-go', { 'do': 'make'}
 
 call plug#end()
 
@@ -217,3 +219,7 @@ let g:ale_sign_column_always = 1
 
 " TODO * pyflakes (not installed yet)
 highlight SpellBad term=underline gui=undercurl guisp=Red
+
+" GO
+let g:go_fmt_command = "goimports"
+
