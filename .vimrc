@@ -133,6 +133,9 @@ nnoremap <leader>l :vsp<CR>
 " Maximize current window
 nnoremap <C-m> <C-W>_
 
+" Close all but main window
+nnoremap <F4> <C-W>o
+
 " FZF shortcut
 nnoremap <C-Home> :FZF<CR>
 
@@ -222,4 +225,8 @@ highlight SpellBad term=underline gui=undercurl guisp=Red
 
 " GO
 let g:go_fmt_command = "goimports"
-
+au FileType go nmap <F1> <Plug>(go-doc)
+au FileType go nmap <F5> <Plug>(go-run)
+au FileType go nmap <F6> <Plug>(go-build)
+au FileType go nmap <F7> <Plug>(go-test)
+au FileType go nmap <F8> <Plug>(go-coverage)
