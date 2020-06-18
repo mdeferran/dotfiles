@@ -81,12 +81,12 @@ setup_sudo() {
     }
 
     # add mdeferran system account
-    test_cmd id mdeferran || sudo useradd mdeferran
+    test_cmd id mdeferran || sudo useradd -m mdeferran
 
     # add mdeferran to sudoers
-    sudo usermod -a -G sudo mdeferran
-    sudo gpasswd -a mdeferran systemd-journal
-    sudo gpasswd -a mdeferran systemd-network
+    sudo -i usermod -a -G sudo mdeferran
+    sudo gpasswd -a mdeferran systemd-journal || true
+    sudo gpasswd -a mdeferran systemd-network || true
     local line='mdeferran ALL=(ALL) NOPASSWD:ALL'
     test_cmd grep mdeferran /etc/sudoers || \
         sudo sed -i "\$a$line" /etc/sudoers
@@ -116,10 +116,10 @@ setup_zsh() {
     link_to_home .zshrc .zsh .zsh-dircolors.config .antigenrc
 
     # set ZSH as user shell
-    sudo usermod -s /bin/zsh mdeferran
+    sudo -i usermod -s /bin/zsh mdeferran
 
     # Add default python for Git prompt info
-    sudo apt install -y python-minimal --no-install-recommends
+    sudo apt install -y python3-minimal --no-install-recommends
 }
 
 # install python playground
@@ -195,6 +195,22 @@ EOF
 
 # install crypto things
 setup_gpg() {
+    # TODO yubico-piv-tool ykpersonalize ykman
+    # https://github.com/drduh/YubiKey-Guide
+
+    # install packages
+    sudo apt update
+    sudo apt install -y gnupg gnupg2 gnupg-agent scdaemon pcscd
+
+    # use GPG agent as SSH agent
+    [ -f "/etc/X11/Xsession.options" ] && \
+        sudo sed -i "s/^use-ssh-agent/# use-ssh-agent/" /etc/X11/Xsession.options
+    link_to_home .zshrc_gpg
+    install -d ${HOME}/.gnupg
+    ln -snf "${DIRSELF}/.gnupg/gpg-agent.conf" "${HOME}/.gnupg/"
+    ln -snf "${DIRSELF}/.gnupg/gpg.conf" "${HOME}/.gnupg/"
+
+    # Add Yubiko debian repo
     cat <<-EOF | sudo tee -a /etc/apt/sources.list.d/yubiko.list
     # yubico
     deb http://ppa.launchpad.net/yubico/stable/ubuntu $(lsb_release -cs) main
@@ -204,19 +220,7 @@ EOF
     # add the yubico ppa gpg key
     sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 3653E21064B19D134466702E43D5C49532CBA1A9
 
-    # TODO yubico-piv-tool ykpersonalize ykman
-    # https://github.com/drduh/YubiKey-Guide
 
-    # install packages
-    sudo apt update
-    sudo apt install -y gnupg gnupg2 gnupg-agent scdaemon pcscd
-
-    # use GPG agent as SSH agent
-    sudo sed -i "s/^use-ssh-agent/# use-ssh-agent/" /etc/X11/Xsession.options
-    link_to_home .zshrc_gpg
-    install -d ${HOME}/.gnupg
-    ln -snf "${DIRSELF}/.gnupg/gpg-agent.conf" "${HOME}/.gnupg/"
-    ln -snf "${DIRSELF}/.gnupg/gpg.conf" "${HOME}/.gnupg/"
 }
 
 # install i3
@@ -272,6 +276,7 @@ main() {
 
     elif [[ $cmd == "base" ]]; then
         setup_base
+        setup_gpg
         setup_zsh
         setup_python
         setup_neovim
@@ -280,7 +285,6 @@ main() {
         setup_wm
 
     elif [[ $cmd == "extra" ]]; then
-        setup_gpg
         setup_go
         setup_ops
 
