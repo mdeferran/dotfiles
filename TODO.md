@@ -1,0 +1,2 @@
+add gopass
+add rclone

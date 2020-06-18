@@ -1,4 +1,6 @@
 # GO
+# GOROOT: where the SDK is located
+# GOPATH: is the root of the workspace
 export GOROOT=$HOME/Apps/go
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
