@@ -1,5 +1,5 @@
 # Download shortcut
-alias dload="curl --remote-name  --progress --location"
+alias dload="curl --remote-name  --progress-bar --location"
 
 # Edit TODO file
 alias todo="vim $HOME/REPOS/doc/portfolio/TODO.txt"
@@ -52,3 +52,17 @@ function worldclock() {
 alias ll='ls -alrt'      #long list
 alias fd='find . -type d -name'
 alias ff='find . -type f -name'
+
+# OpenVPN helper
+function _vpn() {
+    local profile=$1
+    local conf_file="$(find $HOME/.openvpn/$profile/ | grep -E "(conf|ovpn)$" -m 1)"
+    pgrep -f "$conf_file" > /dev/null
+    [ $? -ne 0 ] && sudo openvpn --daemon --config $conf_file
+}
+
+function vpn() {
+    for i in $*; do
+        _vpn $i
+    done
+}
