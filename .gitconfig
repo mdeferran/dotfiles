@@ -100,4 +100,4 @@
     username = manuel.deferran
 
 [credential]
-	helper = "!gopass git-credential $@"
+	helper = "!gopass-git-credentials $@"
