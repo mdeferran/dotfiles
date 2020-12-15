@@ -227,7 +227,7 @@ EOF
 setup_wm() {
     lazy_update
     sudo apt install -y i3 i3lock i3status scrot suckless-tools \
-	xfonts-terminus sakura rxvt-unicode-256color scrot slop --no-install-recommends
+	xfonts-terminus fonts-noto-mono sakura rxvt-unicode-256color scrot slop --no-install-recommends
 
     # alias vim dotfiles to neovim
     mkdir -p "${XDG_CONFIG_HOME:=$HOME/.config}"
