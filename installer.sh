@@ -149,10 +149,10 @@ setup_neovim() {
 EOF
 
     # add the git-core ppa gpg key
-    sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys E1DD270288B4E6030699E45FA1715D88E1DF1F24
+    sudo apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv-keys E1DD270288B4E6030699E45FA1715D88E1DF1F24
 
     # add the neovim ppa gpg key
-    sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 9DBB0BE9366964F134855E2255F96FCF8231B6DD
+    sudo apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv-keys 9DBB0BE9366964F134855E2255F96FCF8231B6DD
 
     # actually install the package
     sudo apt update
@@ -218,9 +218,7 @@ setup_gpg() {
 EOF
 
     # add the yubico ppa gpg key
-    sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 3653E21064B19D134466702E43D5C49532CBA1A9
-
-
+    sudo apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv-keys 32CBA1A9
 }
 
 # install i3

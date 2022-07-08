@@ -6,6 +6,7 @@ source ~/.antigen.zsh
 antigen init ~/.antigenrc
 
 export ZSH_THEME="random"
+export DISABLE_MAGIC_FUNCTIONS="true"
 
 # Uncomment the following line to enable command auto-correction.
 ENABLE_CORRECTION="true"
@@ -56,3 +57,7 @@ export FZF_DEFAULT_COMMAND='ag --hidden --ignore .git  -g ""'
 
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /home/mdeferran/bin/vault vault
+
+[[ $commands[kubectl] ]] && source <(kubectl completion zsh)
+alias k=kubectl
+alias ks='k apply -f - << EOF'

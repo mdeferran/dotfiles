@@ -39,12 +39,14 @@ function worldclock() {
     LONDON=`TZ=Europe/London date +"%c (%z %Z)"`
     PARIS=`TZ=Europe/Paris date +"%c (%z %Z)"`
     TOKYO=`TZ=Asia/Tokyo date +"%c (%z %Z)"`
+    HONG_KONG=`TZ=Asia/Hong_Kong date +"%c (%z %Z)"`
     UTC=`TZ=UTC date +"%c (%z %Z)"`
     echo "Seattle            $SEATTLE"
     echo "New York           $NEW_YORK"
     echo "London             $LONDON"
     echo "Paris              $PARIS"
     echo "Tokyo              $TOKYO"
+    echo "Hong Kong          $HONG_KONG"
     echo "UTC                $UTC"
 }
 
@@ -65,4 +67,30 @@ function vpn() {
     for i in $*; do
         _vpn $i
     done
+}
+
+# Create and change current directory to it
+function cdd() {
+    local d=$1
+    mkdir -p $d
+    cd $d
+}
+
+# Ops related
+function ec2byprivIP() {
+    local ip=$1
+    if [ -z $ip ]; then
+        echo "usage: $0 <private IP>"
+        return
+    fi
+    aws ec2 describe-instances \
+        --filters Name=network-interface.addresses.private-ip-address,Values=$ip \
+        --query 'Reservations[*].Instances[*].[InstanceId, PrivateIpAddress, PublicIpAddress, InstanceType, Tags[?Key==`Name`]| [0].Value]' \
+        --output text
+}
+
+function ec2all() {
+    aws ec2 describe-instances \
+        --query 'Reservations[*].Instances[*].[InstanceId, PrivateIpAddress, PublicIpAddress, InstanceType, Tags[?Key==`Name`]| [0].Value]' \
+        --output text
 }
