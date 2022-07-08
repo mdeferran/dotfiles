@@ -2,6 +2,15 @@
 export PATH="$HOME/.local/bin/:$PATH"
 
 # Python virtualenvs
-# export WORKON_HOME=$HOME/.virtualenvs
+export WORKON_HOME=$HOME/venvs
 # export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
 # source $HOME/.local/bin/virtualenvwrapper.sh
+
+# PySpark
+export SPARK_HOME=$HOME/Apps/spark
+export PATH=${SPARK_HOME}/bin:${SPARK_HOME}/sbin:$PATH
+
+# Use ptpython3 as PySpark shell
+export PYSPARK_PYTHON=python3
+export PYSPARK_DRIVER_PYTHON=ptpython3
+

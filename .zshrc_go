@@ -1,6 +1,29 @@
 # GO
 # GOROOT: where the SDK is located
 # GOPATH: is the root of the workspace
-export GOROOT=$HOME/Apps/go
+# export GOROOT=$HOME/Apps/go
 export GOPATH=$HOME/go
-export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+export PATH=$PATH:$GOPATH/bin
+
+# Protoc
+export PATH="$PATH:$HOME/.local/bin"
+
+# new project
+newgo() {
+    local name=$1
+    if [ -z $name ]; then
+        echo Missing project name
+        return
+    fi
+    mkdir $name && cd $name
+    [ $? -ne 0 ] && return
+    # Guess module path based on PWD
+    if [ -z "${PWD##*gerrit.internal*}" ] ;then
+         go mod init ${PWD##${PWD%%gerrit.internal*}}
+    else
+        echo go mod init yourself
+    fi
+    echo "copy Makefile Dockerfile"  # cookie-cutter or git seed?
+    git init && git add -A && git commit --allow-empty -m "Initial commit"
+    echo "add dependency with: go get -u module_path"
+}
