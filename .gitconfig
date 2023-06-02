@@ -101,4 +101,12 @@
     username = manuel.deferran
 
 [credential]
-	helper = "!gopass-git-credentials $@"
+	helper = cache --timeout 3600
+[gc]
+	autoDetach = false
+	pruneExpire = now
+[url "ssh://admin@gerrit.localhost"]
+	insteadOf = http://gerrit.localhost/a
+
+[url "ssh://gerrit.internal.famoco.com"]
+	insteadOf = https://gerrit.internal.famoco.com/a
