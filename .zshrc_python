@@ -1,16 +1,27 @@
-# Add .local/bin/ user Python lib
-export PATH="$HOME/.local/bin/:$PATH"
+# Python development environment
 
-# Python virtualenvs
+# Add user Python binaries to PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# Python virtual environments
 export WORKON_HOME=$HOME/venvs
-# export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-# source $HOME/.local/bin/virtualenvwrapper.sh
+export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
 
-# PySpark
-export SPARK_HOME=$HOME/Apps/spark
-export PATH=${SPARK_HOME}/bin:${SPARK_HOME}/sbin:$PATH
+# Load virtualenvwrapper if installed
+if [ -f "$HOME/.local/bin/virtualenvwrapper.sh" ]; then
+  source "$HOME/.local/bin/virtualenvwrapper.sh"
+fi
 
-# Use ptpython3 as PySpark shell
-export PYSPARK_PYTHON=python3
-export PYSPARK_DRIVER_PYTHON=ptpython3
+# Python aliases
+alias py='python3'
+alias pip='pip3'
+alias venv='python3 -m venv'
+alias activate='source venv/bin/activate'
 
+# PySpark configuration (if needed)
+if [ -d "$HOME/Apps/spark" ]; then
+  export SPARK_HOME=$HOME/Apps/spark
+  export PATH="${SPARK_HOME}/bin:${SPARK_HOME}/sbin:$PATH"
+  export PYSPARK_PYTHON=python3
+  export PYSPARK_DRIVER_PYTHON=python3
+fi
