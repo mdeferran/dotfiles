@@ -1,0 +1,46 @@
+# Sheldon plugin configuration
+# Migrated from Antigen
+# https://sheldon.cli.rs/
+
+shell = "zsh"
+
+# Oh-My-Zsh framework library
+# Note: Excludes tests directory to avoid test output during shell init
+[plugins.oh-my-zsh-lib]
+github = "ohmyzsh/ohmyzsh"
+dir = "lib"
+use = ["{async_prompt,bzr,cli,clipboard,compfix,completion,correction,diagnostics,directories,functions,git,grep,history,key-bindings,misc,nvm,prompt_info_functions,spectrum,termsupport,theme-and-appearance,vcs_info}.zsh"]
+
+# Oh-My-Zsh plugins
+[plugins.oh-my-zsh-tmux]
+github = "ohmyzsh/ohmyzsh"
+dir = "plugins/tmux"
+
+[plugins.oh-my-zsh-git]
+github = "ohmyzsh/ohmyzsh"
+dir = "plugins/git"
+
+[plugins.oh-my-zsh-pip]
+github = "ohmyzsh/ohmyzsh"
+dir = "plugins/pip"
+
+[plugins.oh-my-zsh-python]
+github = "ohmyzsh/ohmyzsh"
+dir = "plugins/python"
+
+[plugins.oh-my-zsh-virtualenv]
+github = "ohmyzsh/ohmyzsh"
+dir = "plugins/virtualenv"
+
+# External plugins
+[plugins.z]
+github = "rupa/z"
+use = ["z.sh"]
+
+[plugins.zsh-git-prompt]
+github = "olivierverdier/zsh-git-prompt"
+
+# Custom theme
+[plugins.mdeferran-theme]
+local = "~/.zsh/themes/mdeferran"
+use = ["mdeferran.zsh-theme"]

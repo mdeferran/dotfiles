@@ -12,26 +12,19 @@ if [[ $ZSHRC_DEBUG -eq 1 ]]; then
   echo "[DEBUG] Starting .zshrc at $ZSHRC_START"
 fi
 
-# Load Antigen plugin manager
-export ANTIGEN_LOG=/tmp/antigen.log
+# Load Sheldon plugin manager
 if [[ $ZSHRC_DEBUG -eq 1 ]]; then
-  echo "[DEBUG] Loading antigen at $SECONDS (elapsed: $((SECONDS - ZSHRC_START))s)"
-  ANTIGEN_LOAD_START=$SECONDS
+  echo "[DEBUG] Loading sheldon at $SECONDS (elapsed: $((SECONDS - ZSHRC_START))s)"
+  SHELDON_LOAD_START=$SECONDS
 fi
 
-source ~/.antigen.zsh
+# Cache sheldon plugins for faster startup
+# Sheldon will generate the plugin loading script
+eval "$(sheldon source 2>/dev/null)"
 
 if [[ $ZSHRC_DEBUG -eq 1 ]]; then
-  echo "[DEBUG] Antigen loaded in $((SECONDS - ANTIGEN_LOAD_START))s"
-  echo "[DEBUG] Initializing antigen at $SECONDS (elapsed: $((SECONDS - ZSHRC_START))s)"
-  ANTIGEN_INIT_START=$SECONDS
-fi
-
-antigen init ~/.antigenrc
-
-if [[ $ZSHRC_DEBUG -eq 1 ]]; then
-  echo "[DEBUG] Antigen init took $((SECONDS - ANTIGEN_INIT_START))s"
-  echo "[DEBUG] Antigen done at $SECONDS (elapsed: $((SECONDS - ZSHRC_START))s)"
+  echo "[DEBUG] Sheldon loaded in $((SECONDS - SHELDON_LOAD_START))s"
+  echo "[DEBUG] Sheldon done at $SECONDS (elapsed: $((SECONDS - ZSHRC_START))s)"
 fi
 
 # ZSH settings
