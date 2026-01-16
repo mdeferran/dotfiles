@@ -212,7 +212,7 @@ setup_zsh() {
     # Install Antigen
     if [ ! -f "$HOME/.antigen.zsh" ]; then
         log_info "Installing Antigen..."
-        curl -L git.io/antigen > "$HOME/.antigen.zsh"
+        curl -L https://raw.githubusercontent.com/zsh-users/antigen/master/bin/antigen.zsh > "$HOME/.antigen.zsh"
     fi
 
     # Change shell to ZSH
