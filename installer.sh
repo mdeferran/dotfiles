@@ -82,7 +82,6 @@ link_dotfiles() {
     local files=(
         .zshrc .zshrc_helpers .zshrc_python .zshrc_go .zshrc_gpg .zshrc_ops
         .gitconfig .tmux.conf .vimrc
-        .antigenrc
     )
 
     # Create backup directory if any files exist
@@ -126,6 +125,13 @@ link_dotfiles() {
     if [ -d "$SCRIPT_DIR/.config/ghostty" ]; then
         ln -snf "$SCRIPT_DIR/.config/ghostty" "$HOME/.config/ghostty"
         log_info "Linked .config/ghostty"
+    fi
+
+    # Link Sheldon config
+    if [ -f "$SCRIPT_DIR/plugins.toml" ]; then
+        mkdir -p "$HOME/.config/sheldon"
+        ln -snf "$SCRIPT_DIR/plugins.toml" "$HOME/.config/sheldon/plugins.toml"
+        log_info "Linked .config/sheldon/plugins.toml"
     fi
 
     # Link .gnupg config
@@ -209,10 +215,22 @@ setup_zsh() {
 
     install_packages zsh
 
-    # Install Antigen
-    if [ ! -f "$HOME/.antigen.zsh" ]; then
-        log_info "Installing Antigen..."
-        curl -L https://raw.githubusercontent.com/zsh-users/antigen/master/bin/antigen.zsh > "$HOME/.antigen.zsh"
+    # Install Sheldon (fast Rust-based plugin manager)
+    if ! command -v sheldon &> /dev/null; then
+        log_info "Installing Sheldon..."
+        curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
+            | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
+
+        # Add ~/.local/bin to PATH if not already there
+        if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+            export PATH="$HOME/.local/bin:$PATH"
+        fi
+    fi
+
+    # Initialize Sheldon plugins on first run
+    if command -v sheldon &> /dev/null; then
+        log_info "Initializing Sheldon plugins..."
+        sheldon lock --update
     fi
 
     # Change shell to ZSH
