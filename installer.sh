@@ -1,298 +1,457 @@
 #!/bin/bash
-# The script can be sourced or run with args
+# Modern dotfiles installer for Ubuntu 24.04/25.04
 #
-# Usage: run 'installer.sh sudo' as root
-#        run 'installer.sh base' as user
-#
+# Usage:
+#   ./installer.sh base     # Install base configuration
+#   ./installer.sh dev      # Install development tools
+#   ./installer.sh all      # Install everything
+#   ./installer.sh link     # Just link dotfiles to $HOME
 
-# source: https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
-set -euxo pipefail
+set -euo pipefail
 
-# non interactive package configuration
-export DEBIAN_FRONTEND=noninteractive
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m' # No Color
 
-# cleanup after package installation
-clean_apt() {
-    sudo apt autoremove
-    sudo apt autoclean
-    sudo apt clean
-}
-
-# get the script location
+# Get script directory
 get_script_dir() {
-    SOURCE="${BASH_SOURCE[0]}"
-     while [ -h "$SOURCE" ]; do
-          DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-          SOURCE="$(readlink "$SOURCE")"
-          [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-     done
-     DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-     echo "$DIR"
-}
-DIRSELF="$(get_script_dir)"
-
-# remove default junk
-clean_home() {
-    (cd $HOME; rmdir Videos Pictures Public Music Documents Templates;
-    rm -f examples.desktop)
+    local source="${BASH_SOURCE[0]}"
+    while [ -h "$source" ]; do
+        local dir="$(cd -P "$(dirname "$source")" && pwd)"
+        source="$(readlink "$source")"
+        [[ $source != /* ]] && source="$dir/$source"
+    done
+    echo "$(cd -P "$(dirname "$source")" && pwd)"
 }
 
-# test command rc with euxo mode on
-test_cmd() {
-    local cmd=$@
-    local rc=0
-    $cmd > /dev/null 2>&1 || rc=$? && true
-    return $rc
+readonly SCRIPT_DIR="$(get_script_dir)"
+readonly BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
+
+# Logging functions
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
 }
 
-# run apt update if none has been run recently
-lazy_update() {
-    if [ $(expr $(date +%s) - $(stat -c %Y /var/lib/apt/lists/partial)) \
-         -gt 600 ]; then
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if running on supported Ubuntu version
+check_ubuntu_version() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [[ "$ID" == "ubuntu" ]]; then
+            local version="${VERSION_ID%.*}"
+            if [[ "$version" -ge 24 ]]; then
+                log_info "Detected Ubuntu $VERSION_ID - supported!"
+                return 0
+            fi
+        fi
+    fi
+    log_error "This script requires Ubuntu 24.04 or later"
+    return 1
+}
+
+# Update package lists if stale
+apt_update_if_needed() {
+    local apt_lists="/var/lib/apt/lists"
+    if [ ! -d "$apt_lists" ] || [ -z "$(find "$apt_lists" -maxdepth 1 -mmin -60 2>/dev/null)" ]; then
+        log_info "Updating package lists..."
         sudo apt update
     fi
 }
 
-# install dotfiles to $HOME, accept list of path
-link_to_home() {
-    local files=("$@")
-    [ ${#files[@]} -eq 0 ] && return 1
-    for src in "${files[@]}"; do
-        fp_src="${DIRSELF}/${src}"
-        if [ -e "$fp_src" ]; then
-            ln -snf "$fp_src" "$HOME"
+# Install packages
+install_packages() {
+    local packages=("$@")
+    log_info "Installing packages: ${packages[*]}"
+    apt_update_if_needed
+    sudo DEBIAN_FRONTEND=noninteractive apt install -y "${packages[@]}" --no-install-recommends
+}
+
+# Link dotfiles to home directory
+link_dotfiles() {
+    log_info "Linking dotfiles to $HOME"
+
+    local files=(
+        .zshrc .zshrc_helpers .zshrc_python .zshrc_go .zshrc_gpg .zshrc_ops
+        .gitconfig .tmux.conf .vimrc
+        .antigenrc
+    )
+
+    # Create backup directory if any files exist
+    local needs_backup=false
+    for file in "${files[@]}"; do
+        if [ -e "$HOME/$file" ] && [ ! -L "$HOME/$file" ]; then
+            needs_backup=true
+            break
         fi
     done
-}
 
-# install sudo, requires root
-setup_sudo() {
-    test_cmd sudo -v || {
-        # If not root, exit
-        if [ "$EUID" -ne 0 ]; then
-            echo Run the following as root
-            echo 'su -c "(source installer.sh; setup_sudo)"'
-            return 1
+    if [ "$needs_backup" = true ]; then
+        log_warn "Creating backup of existing dotfiles in $BACKUP_DIR"
+        mkdir -p "$BACKUP_DIR"
+    fi
+
+    # Link files
+    for file in "${files[@]}"; do
+        local src="$SCRIPT_DIR/$file"
+        local dst="$HOME/$file"
+
+        if [ ! -e "$src" ]; then
+            log_warn "Source file not found: $src"
+            continue
         fi
 
-        # install the sudo package
-        apt update
-        apt install -y sudo --no-install-recommends
-    }
+        # Backup existing file
+        if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+            log_info "Backing up $file"
+            mv "$dst" "$BACKUP_DIR/"
+        fi
 
-    # add mdeferran system account
-    test_cmd id mdeferran || sudo useradd -m mdeferran
+        # Create symlink
+        ln -snf "$src" "$dst"
+        log_info "Linked $file"
+    done
 
-    # add mdeferran to sudoers
-    sudo -i usermod -a -G sudo mdeferran
-    sudo gpasswd -a mdeferran systemd-journal || true
-    sudo gpasswd -a mdeferran systemd-network || true
-    local line='mdeferran ALL=(ALL) NOPASSWD:ALL'
-    test_cmd grep mdeferran /etc/sudoers || \
-        sudo sed -i "\$a$line" /etc/sudoers
-}
+    # Link .config directories
+    mkdir -p "$HOME/.config"
 
-# install base package
-setup_base() {
-    lazy_update
-    sudo apt install -y git tmux rsync lsof net-tools silversearcher-ag \
-        zip unzip dnsutils apt-transport-https ca-certificates lsb-release \
-        curl less openssh-client \
-        --no-install-recommends
+    if [ -d "$SCRIPT_DIR/.config/ghostty" ]; then
+        ln -snf "$SCRIPT_DIR/.config/ghostty" "$HOME/.config/ghostty"
+        log_info "Linked .config/ghostty"
+    fi
 
-    link_to_home .gitconfig .tmux.conf .agignore
+    # Link .gnupg config
+    if [ -d "$SCRIPT_DIR/.gnupg" ]; then
+        mkdir -p "$HOME/.gnupg"
+        chmod 700 "$HOME/.gnupg"
+        ln -snf "$SCRIPT_DIR/.gnupg/gpg.conf" "$HOME/.gnupg/gpg.conf"
+        ln -snf "$SCRIPT_DIR/.gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
+        log_info "Linked .gnupg config"
+    fi
 
-    link_to_home .zshrc_helpers
-}
+    # Link .ssh config
+    if [ -f "$SCRIPT_DIR/.ssh/config" ]; then
+        mkdir -p "$HOME/.ssh"
+        mkdir -p "$HOME/.ssh/sockets"
+        chmod 700 "$HOME/.ssh"
+        ln -snf "$SCRIPT_DIR/.ssh/config" "$HOME/.ssh/config"
+        log_info "Linked .ssh/config"
+    fi
 
-# install ZSH
-setup_zsh() {
-    sudo apt install -y zsh --no-install-recommends
-
-    # Install ZSH Antigen
-    curl -L git.io/antigen > $HOME/.antigen.zsh
-
-    # Install dotfiles
-    link_to_home .zshrc .zsh .zsh-dircolors.config .antigenrc
-
-    # set ZSH as user shell
-    sudo -i usermod -s /bin/zsh mdeferran
-
-    # Add default python for Git prompt info
-    sudo apt install -y python3-minimal --no-install-recommends
-}
-
-# install python playground
-setup_python() {
-    lazy_update
-    sudo apt install -y \
-            python3-pip \
-            python3-setuptools \
-            --no-install-recommends
-
-    # virtualenvwrapper
-    pip3 install -U wheel
-    pip3 install -U virtualenvwrapper
-
-    # create venv directory
-    install -d $HOME/.virtualenvs
-
-    link_to_home .zshrc_python
-}
-
-# install neovim
-setup_neovim() {
-    # add pkg repo
-    cat <<-EOF | sudo tee /etc/apt/sources.list.d/neovim.list
-    deb http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu $(lsb_release -cs) main
-    deb-src http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu $(lsb_release -cs) main
-EOF
-
-    # add the git-core ppa gpg key
-    sudo apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv-keys E1DD270288B4E6030699E45FA1715D88E1DF1F24
-
-    # add the neovim ppa gpg key
-    sudo apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv-keys 9DBB0BE9366964F134855E2255F96FCF8231B6DD
-
-    # actually install the package
-    sudo apt update
-    sudo apt install -y neovim xclip
-
-    # install .vimrc files
-    link_to_home .vimrc
-
-    # install vim-plug
-    curl -fLo ${HOME}/.vim/autoload/plug.vim --create-dirs \
-        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-
-    # alias vim dotfiles to neovim
-    mkdir -p "${XDG_CONFIG_HOME:=$HOME/.config}"
-    ln -snf "${HOME}/.vim" "${XDG_CONFIG_HOME}/nvim"
-    ln -snf "${DIRSELF}/.vimrc" "${XDG_CONFIG_HOME}/nvim/init.vim"
-
-    # update alternatives to neovim
-    sudo update-alternatives --install /usr/bin/vi vi "$(which nvim)" 60
-    sudo update-alternatives --config vi --skip-auto
-    sudo update-alternatives --install /usr/bin/vim vim "$(which nvim)" 60
-    sudo update-alternatives --config vim --skip-auto
-    sudo update-alternatives --install /usr/bin/editor editor "$(which nvim)" 60
-    sudo update-alternatives --config editor --skip-auto
-
-    # install things needed for deoplete for vim
-    lazy_update
-    sudo apt install -y \
-            python3-pip \
-            python3-setuptools \
-            --no-install-recommends
-
-    # install python lib deps
-    pip3 install -U wheel
-    pip3 install -U neovim flake8
-
-    # install the plugins
-    vim +PlugInstall +qall
-}
-
-# install crypto things
-setup_gpg() {
-    # TODO yubico-piv-tool ykpersonalize ykman
-    # https://github.com/drduh/YubiKey-Guide
-
-    # install packages
-    sudo apt update
-    sudo apt install -y gnupg gnupg2 gnupg-agent scdaemon pcscd
-
-    # use GPG agent as SSH agent
-    [ -f "/etc/X11/Xsession.options" ] && \
-        sudo sed -i "s/^use-ssh-agent/# use-ssh-agent/" /etc/X11/Xsession.options
-    link_to_home .zshrc_gpg
-    install -d ${HOME}/.gnupg
-    ln -snf "${DIRSELF}/.gnupg/gpg-agent.conf" "${HOME}/.gnupg/"
-    ln -snf "${DIRSELF}/.gnupg/gpg.conf" "${HOME}/.gnupg/"
-
-    # Add Yubiko debian repo
-    cat <<-EOF | sudo tee -a /etc/apt/sources.list.d/yubiko.list
-    # yubico
-    deb http://ppa.launchpad.net/yubico/stable/ubuntu $(lsb_release -cs) main
-    deb-src http://ppa.launchpad.net/yubico/stable/ubuntu $(lsb_release -cs) main
-EOF
-
-    # add the yubico ppa gpg key
-    sudo apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv-keys 32CBA1A9
-}
-
-# install i3
-setup_wm() {
-    lazy_update
-    sudo apt install -y i3 i3lock i3status scrot suckless-tools \
-	xfonts-terminus fonts-noto-mono sakura rxvt-unicode-256color scrot slop --no-install-recommends
-
-    # alias vim dotfiles to neovim
-    mkdir -p "${XDG_CONFIG_HOME:=$HOME/.config}"
-    ln -snf "${DIRSELF}/.config/i3" "${XDG_CONFIG_HOME}/i3"
-    ln -snf "${DIRSELF}/.config/sakura" "${XDG_CONFIG_HOME}/sakura"
-
-    sudo update-alternatives --install /usr/bin/x-window-manager x-window-manager /usr/bin/i3 20
-}
-
-# install go playground
-setup_go() {
-    # add GO env to .zshrc
-    link_to_home .zshrc_go
-}
-
-# install ops: ansible, awscli, awless
-setup_ops() {
-    # Install from Github
-    go get -u github.com/wallix/awless
-
-    # add AWS and ansible env to .zshrc
-    link_to_home .zshrc_ops
-}
-
-# install android dev env
-setup_android() {
-    # add JAVA and Android env to .zshrc
-    link_to_home .zshrc_android
-}
-
-usage() {
-    echo "installer.sh  usage|nase|wm|extra|clean  # as normal user"
-    echo "installer.sh  sudo                       # as root"
-}
-
-# main when interactive
-main() {
-    local cmd=${1:-usage}
-
-    if [[ $cmd == "usage" ]]; then
-        usage
-        exit 1
-
-    elif [[ $cmd == "sudo" ]]; then
-        setup_sudo
-
-    elif [[ $cmd == "base" ]]; then
-        setup_base
-        setup_gpg
-        setup_zsh
-        setup_python
-        setup_neovim
-
-    elif [[ $cmd == "wm" ]]; then
-        setup_wm
-
-    elif [[ $cmd == "extra" ]]; then
-        setup_go
-        setup_ops
-
-    elif [[ $cmd == "clean" ]]; then
-        clean_home
-        clean_apt
+    # Link .zsh directory (custom themes)
+    if [ -d "$SCRIPT_DIR/.zsh" ]; then
+        ln -snf "$SCRIPT_DIR/.zsh" "$HOME/.zsh"
+        log_info "Linked .zsh directory"
     fi
 }
 
-# Call main if not sourced
+# Install base packages and configuration
+setup_base() {
+    log_info "Setting up base environment..."
+
+    local packages=(
+        # Core tools
+        git
+        tmux
+        curl
+        wget
+        ca-certificates
+        gnupg
+
+        # Modern CLI tools
+        ripgrep
+        fd-find
+        fzf
+
+        # Network tools
+        openssh-client
+        net-tools
+        dnsutils
+
+        # Compression
+        zip
+        unzip
+        bzip2
+
+        # Build essentials
+        build-essential
+
+        # Fonts
+        fonts-firacode
+    )
+
+    install_packages "${packages[@]}"
+    link_dotfiles
+
+    # Update font cache
+    if command -v fc-cache &> /dev/null; then
+        log_info "Updating font cache..."
+        fc-cache -f
+    fi
+
+    # Setup Ghostty (check if available)
+    setup_ghostty
+
+    log_info "Base setup complete!"
+}
+
+# Install ZSH and configure
+setup_zsh() {
+    log_info "Setting up ZSH..."
+
+    install_packages zsh
+
+    # Install Antigen
+    if [ ! -f "$HOME/.antigen.zsh" ]; then
+        log_info "Installing Antigen..."
+        curl -L git.io/antigen > "$HOME/.antigen.zsh"
+    fi
+
+    # Change shell to ZSH
+    if [ "$SHELL" != "$(which zsh)" ]; then
+        log_info "Changing default shell to ZSH..."
+        sudo chsh -s "$(which zsh)" "$USER"
+        log_info "Shell changed to ZSH (logout and login to take effect)"
+    fi
+
+    log_info "ZSH setup complete!"
+}
+
+# Install Neovim
+setup_neovim() {
+    log_info "Setting up Neovim..."
+
+    # Install neovim and dependencies
+    install_packages neovim python3-neovim
+
+    # Link neovim config to vim config
+    mkdir -p "$HOME/.config/nvim"
+    ln -snf "$SCRIPT_DIR/.vimrc" "$HOME/.config/nvim/init.vim"
+
+    # Update alternatives
+    if command -v update-alternatives &> /dev/null; then
+        sudo update-alternatives --install /usr/bin/vi vi "$(which nvim)" 60 || true
+        sudo update-alternatives --install /usr/bin/vim vim "$(which nvim)" 60 || true
+        sudo update-alternatives --install /usr/bin/editor editor "$(which nvim)" 60 || true
+    fi
+
+    log_info "Neovim setup complete!"
+    log_info "Plugins will auto-install on first run (lazy.nvim)"
+    log_info "Use :Lazy to manage plugins and :Lazy restore to sync from lockfile"
+}
+
+# Install Python development tools
+setup_python() {
+    log_info "Setting up Python environment..."
+
+    install_packages python3 python3-venv
+
+    # Install uv (modern Python package manager)
+    log_info "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # Source uv in current shell
+    export PATH="$HOME/.cargo/bin:$PATH"
+
+    # Install common Python tools with uv
+    if command -v uv &> /dev/null; then
+        log_info "Installing Python development tools with uv..."
+        uv tool install black
+        uv tool install flake8
+        uv tool install pylint
+        uv tool install isort
+        uv tool install mypy
+        uv tool install ruff
+    else
+        log_warn "uv installation failed, skipping tool installation"
+    fi
+
+    log_info "Python setup complete!"
+    log_info "Restart your shell or run: source ~/.zshrc"
+}
+
+# Install Go
+setup_go() {
+    log_info "Setting up Go environment..."
+
+    # Install Go from official repository
+    install_packages golang-go
+
+    # Create Go workspace
+    mkdir -p "$HOME/go/bin"
+
+    log_info "Go setup complete!"
+    log_info "Go workspace: $HOME/go"
+}
+
+# Install GPG and related tools
+setup_gpg() {
+    log_info "Setting up GPG..."
+
+    install_packages gnupg2 gnupg-agent scdaemon pcscd
+
+    log_info "GPG setup complete!"
+}
+
+# Install Ghostty terminal (if available)
+setup_ghostty() {
+    log_info "Checking for Ghostty terminal..."
+
+    # Ghostty installation varies by version - check if it's already installed
+    if command -v ghostty &> /dev/null; then
+        log_info "Ghostty is already installed"
+        return 0
+    fi
+
+    log_warn "Ghostty not found in PATH"
+    log_info "Please install Ghostty manually from: https://ghostty.org"
+    log_info "The Ghostty configuration is ready in .config/ghostty/"
+}
+
+# Install fonts
+setup_fonts() {
+    log_info "Setting up fonts..."
+
+    install_packages fonts-firacode
+
+    # Update font cache
+    if command -v fc-cache &> /dev/null; then
+        fc-cache -f
+    fi
+
+    log_info "Fonts setup complete!"
+}
+
+# Install Docker
+setup_docker() {
+    log_info "Setting up Docker..."
+
+    # Add Docker's official GPG key
+    sudo install -m 0755 -d /etc/apt/keyrings
+    if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    fi
+
+    # Add repository
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    # Install Docker
+    sudo apt update
+    install_packages docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    # Add user to docker group
+    sudo usermod -aG docker "$USER"
+
+    log_info "Docker setup complete!"
+    log_info "Logout and login for docker group membership to take effect"
+}
+
+# Install Kubernetes tools
+setup_k8s() {
+    log_info "Setting up Kubernetes tools..."
+
+    # Install kubectl
+    if ! command -v kubectl &> /dev/null; then
+        log_info "Installing kubectl..."
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+        rm kubectl
+    fi
+
+    # Install helm
+    if ! command -v helm &> /dev/null; then
+        log_info "Installing helm..."
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    fi
+
+    log_info "Kubernetes tools setup complete!"
+}
+
+# Usage information
+usage() {
+    cat <<EOF
+Modern dotfiles installer for Ubuntu 24.04/25.04
+
+Usage: $(basename "$0") <command>
+
+Commands:
+    base        Install base packages and link dotfiles (includes fonts and Ghostty config)
+    dev         Install development tools (Python with uv, Go)
+    neovim      Install and configure Neovim with plugins
+    docker      Install Docker
+    k8s         Install Kubernetes tools (kubectl, helm)
+    all         Install everything
+    link        Just link dotfiles (no package installation)
+
+Examples:
+    $(basename "$0") base      # Minimal setup with modern tools
+    $(basename "$0") all       # Full setup
+    $(basename "$0") dev       # Add dev tools to existing setup
+    $(basename "$0") neovim    # Just install Neovim
+EOF
+}
+
+# Main installation logic
+main() {
+    local command="${1:-}"
+
+    # Check Ubuntu version first
+    check_ubuntu_version || exit 1
+
+    case "$command" in
+        base)
+            setup_base
+            setup_zsh
+            setup_gpg
+            ;;
+        dev)
+            setup_python
+            setup_go
+            ;;
+        neovim)
+            setup_neovim
+            ;;
+        docker)
+            setup_docker
+            ;;
+        k8s)
+            setup_k8s
+            ;;
+        all)
+            setup_base
+            setup_zsh
+            setup_gpg
+            setup_python
+            setup_go
+            setup_neovim
+            setup_docker
+            setup_k8s
+            ;;
+        link)
+            link_dotfiles
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+
+    log_info "Done! 🎉"
+}
+
+# Run main if not sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi

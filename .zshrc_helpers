@@ -1,96 +1,142 @@
-# Download shortcut
-alias dload="curl --remote-name  --progress-bar --location"
+# Helper functions and aliases
 
-# Edit TODO file
-alias todo="vim $HOME/REPOS/doc/portfolio/TODO.txt"
+# Download shortcut
+alias dload="curl --remote-name --progress-bar --location"
 
 # Rerun with sudo
 alias please='sudo $(fc -ln -1)'
 
-# Spawn an editor on a temp file
-# alias vit="vim =(...)"
-# Replaced by CTRL-X CTRL-E
+# Modern tool aliases (ripgrep, fd-find)
+if command -v rg &> /dev/null; then
+  alias grep='rg'
+fi
 
-# Newest file and newest dir aliases
-alias -g ND='*(/om[1])' # newest directory
-alias -g NF='*(.om[1])' # newest file
+if command -v fdfind &> /dev/null; then
+  alias fd='fdfind'
+fi
 
-# Inline aliases less and grep
+# Inline aliases for less and grep
 alias -g G='| grep -'
 alias -g L='| less'
+alias -g J='| jq'
 
-# Sort by cpu and mem usage
-function psc {
+# List aliases
+alias ll='ls -alrt'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Modern find alternatives (if fd not installed, fallback to find)
+if ! command -v fd &> /dev/null && ! command -v fdfind &> /dev/null; then
+  alias ffd='find . -type d -name'
+  alias fff='find . -type f -name'
+fi
+
+# Newest file and directory glob aliases
+alias -g ND='*(/om[1])'  # newest directory
+alias -g NF='*(.om[1])'  # newest file
+
+# Sort processes by CPU and memory usage
+function psc() {
   ps --cols=1000 --sort='-%cpu,uid,pgid,ppid,pid' -e \
      -o user,pid,ppid,pgid,stime,stat,wchan,time,pcpu,pmem,vsz,rss,sz,args |
      sed 's/^/ /' | less
 }
 
-function psm {
+function psm() {
   ps --cols=1000 --sort='-vsz,uid,pgid,ppid,pid' -e \
      -o user,pid,ppid,pgid,stime,stat,wchan,time,pcpu,pmem,vsz,rss,sz,args |
      sed 's/^/ /' | less
 }
 
-# Display time in several locations
+# World clock - display time in multiple timezones
 function worldclock() {
-    SEATTLE=`TZ=America/Los_Angeles date +"%c (%z %Z)"`
-    NEW_YORK=`TZ=America/New_York date +"%c (%z %Z)"`
-    LONDON=`TZ=Europe/London date +"%c (%z %Z)"`
-    PARIS=`TZ=Europe/Paris date +"%c (%z %Z)"`
-    TOKYO=`TZ=Asia/Tokyo date +"%c (%z %Z)"`
-    HONG_KONG=`TZ=Asia/Hong_Kong date +"%c (%z %Z)"`
-    UTC=`TZ=UTC date +"%c (%z %Z)"`
-    echo "Seattle            $SEATTLE"
-    echo "New York           $NEW_YORK"
-    echo "London             $LONDON"
-    echo "Paris              $PARIS"
-    echo "Tokyo              $TOKYO"
-    echo "Hong Kong          $HONG_KONG"
-    echo "UTC                $UTC"
+  local SEATTLE=$(TZ=America/Los_Angeles date +"%c (%z %Z)")
+  local NEW_YORK=$(TZ=America/New_York date +"%c (%z %Z)")
+  local LONDON=$(TZ=Europe/London date +"%c (%z %Z)")
+  local PARIS=$(TZ=Europe/Paris date +"%c (%z %Z)")
+  local TOKYO=$(TZ=Asia/Tokyo date +"%c (%z %Z)")
+  local HONG_KONG=$(TZ=Asia/Hong_Kong date +"%c (%z %Z)")
+  local UTC=$(TZ=UTC date +"%c (%z %Z)")
+
+  echo "Seattle      $SEATTLE"
+  echo "New York     $NEW_YORK"
+  echo "London       $LONDON"
+  echo "Paris        $PARIS"
+  echo "Tokyo        $TOKYO"
+  echo "Hong Kong    $HONG_KONG"
+  echo "UTC          $UTC"
 }
 
-# List and find helpers
-alias ll='ls -alrt'      #long list
-alias fd='find . -type d -name'
-alias ff='find . -type f -name'
+# Create directory and change into it
+function cdd() {
+  local dir=$1
+  if [[ -z "$dir" ]]; then
+    echo "Usage: cdd <directory>"
+    return 1
+  fi
+  mkdir -p "$dir" && cd "$dir"
+}
 
-# OpenVPN helper
+# OpenVPN helper functions
 function _vpn() {
-    local profile=$1
-    local conf_file="$(find $HOME/.openvpn/$profile/ | grep -E "(conf|ovpn)$" -m 1)"
-    pgrep -f "$conf_file" > /dev/null
-    [ $? -ne 0 ] && sudo openvpn --daemon --config $conf_file
+  local profile=$1
+  local conf_file=$(find "$HOME/.openvpn/$profile/" -regex ".*\.\(conf\|ovpn\)$" -print -quit 2>/dev/null)
+
+  if [[ -z "$conf_file" ]]; then
+    echo "No config file found for profile: $profile"
+    return 1
+  fi
+
+  if ! pgrep -f "$conf_file" > /dev/null; then
+    sudo openvpn --daemon --config "$conf_file"
+  else
+    echo "VPN profile '$profile' is already running"
+  fi
 }
 
 function vpn() {
-    for i in $*; do
-        _vpn $i
-    done
+  if [[ $# -eq 0 ]]; then
+    echo "Usage: vpn <profile1> [profile2 ...]"
+    return 1
+  fi
+
+  for profile in "$@"; do
+    _vpn "$profile"
+  done
 }
 
-# Create and change current directory to it
-function cdd() {
-    local d=$1
-    mkdir -p $d
-    cd $d
-}
+# AWS EC2 helper functions
+function ec2byprivip() {
+  local ip=$1
+  if [[ -z "$ip" ]]; then
+    echo "Usage: ec2byprivip <private-ip>"
+    return 1
+  fi
 
-# Ops related
-function ec2byprivIP() {
-    local ip=$1
-    if [ -z $ip ]; then
-        echo "usage: $0 <private IP>"
-        return
-    fi
-    aws ec2 describe-instances \
-        --filters Name=network-interface.addresses.private-ip-address,Values=$ip \
-        --query 'Reservations[*].Instances[*].[InstanceId, PrivateIpAddress, PublicIpAddress, InstanceType, Tags[?Key==`Name`]| [0].Value]' \
-        --output text
+  aws ec2 describe-instances \
+    --filters "Name=network-interface.addresses.private-ip-address,Values=$ip" \
+    --query 'Reservations[*].Instances[*].[InstanceId,PrivateIpAddress,PublicIpAddress,InstanceType,Tags[?Key==`Name`]|[0].Value]' \
+    --output table
 }
 
 function ec2all() {
-    aws ec2 describe-instances \
-        --query 'Reservations[*].Instances[*].[InstanceId, PrivateIpAddress, PublicIpAddress, InstanceType, Tags[?Key==`Name`]| [0].Value]' \
-        --output text
+  aws ec2 describe-instances \
+    --query 'Reservations[*].Instances[*].[InstanceId,PrivateIpAddress,PublicIpAddress,InstanceType,State.Name,Tags[?Key==`Name`]|[0].Value]' \
+    --output table
 }
+
+# Quick directory navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# Git helpers (additional to .gitconfig aliases)
+alias gs='git status'
+alias gd='git diff'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git pull'
+alias gco='git checkout'
+alias gb='git branch'
+alias glog='git log --oneline --graph --decorate'

@@ -1,233 +1,400 @@
-set nocompatible            " Disable compatibility to old-time vi
-set showmatch               " Show matching brackets.
-set ignorecase              " Do case insensitive matching
-set mouse=v                 " middle-click paste with mouse
-set hlsearch                " highlight search results
-set tabstop=4               " number of columns occupied by a tab character
-set softtabstop=4           " see multiple spaces as tabstops so <BS> does the right thing
-set expandtab               " converts tabs to white space
-set shiftwidth=4            " width for autoindents
-set autoindent              " indent a new line the same amount as the line just typed
-set wildmode=longest,list   " get bash-like tab completions
-set cc=80                   " set an 80 column border for good coding style
+" Modern Vim/Neovim configuration for Ubuntu 24.04/25.04
+" Using lazy.nvim for reproducible plugin management
 
-set noswapfile              " Don't use swapfile
-set nobackup		    " Don't create annoying backup files
-set nowritebackup
-set splitright              " Split vertical windows right to the current windows
-set splitbelow              " Split horizontal windows below to the current windows
-set encoding=utf-8          " Set default encoding to UTF-8
-set autowrite               " Automatically save before :next, :make etc.
-set autoread                " Automatically reread changed files without asking me anything
-
+" Basic settings
+set nocompatible
+set encoding=utf-8
+set mouse=a          " Enable mouse: left-click to select, middle-click to paste
 set ttyfast
-set lazyredraw                  " Wait to redraw "
+set lazyredraw
 
-" Ignore all kind of junk files or files we would not want to edit
+" Display
+set number relativenumber
+set showmatch
+set hlsearch
+set cc=100
+set signcolumn=yes
+
+" Indentation
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+set expandtab
+set autoindent
+set smartindent
+
+" File handling
+set noswapfile
+set nobackup
+set nowritebackup
+set autowrite
+set autoread
+
+" Splits
+set splitright
+set splitbelow
+
+" Search
+set ignorecase
+set smartcase
+set incsearch
+
+" Completion
+set wildmode=longest:full,full
+set wildmenu
+set completeopt=menu,menuone,noselect
+
+" Ignore patterns
 set wildignore+=.DS_Store
 set wildignore+=*.jpg,*.jpeg,*.png,*.gif,*.psd,*.o,*.obj,*.min.js
 set wildignore+=*.mp3,*.mp4,*.ogg,*.mkv
-set wildignore+=*/vendor/*,*/.git/*,*/.hg/*,*/.svn/*,*/log/*,*/tmp/*,*/build/*,*/dist/*
+set wildignore+=*/vendor/*,*/.git/*,*/.hg/*,*/.svn/*
+set wildignore+=*/log/*,*/tmp/*,*/build/*,*/dist/*,*/node_modules/*
 
-" In many terminal emulators the mouse works just fine, thus enable it.
-if has('mouse')
-  set mouse=a
-endif
+" Performance
+filetype plugin indent on
+syntax enable
 
-" Copy highligh text to clipboard (CTRL-SHIFT V to paste to term)
-vmap <C-c> "*y
-
-" * Plugins vim-plug
-" For NeoVim use call plug#begin('~/.local/share/nvim/plugged')
-call plug#begin('~/.vim/plugged')
-
-" BROWSE
-" FZF
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-
-" Trailing whitespace
-Plug 'ntpeters/vim-better-whitespace'
-
-" Comments
-Plug 'tpope/vim-commentary'
-
-" INTERFACE
-" colorization
-Plug 'iCyMind/NeoSolarized'
-
-" status line
-Plug 'itchyny/lightline.vim'
-
-" Start up screen
-Plug 'mhinz/vim-startify'
-
-" LANGUAGE HELPERS
-" syntax checker
-Plug 'w0rp/ale'
-
-" Ansible plugin
-Plug 'pearofducks/ansible-vim'
-
-" Markdown support
-Plug 'plasticboy/vim-markdown'
-
-" PGP support
-Plug 'jamessan/vim-gnupg'
-
-" GIT
-Plug 'tpope/vim-fugitive'
-Plug 'airblade/vim-gitgutter'
-
-" COMPLETION
-" Deoplete
-Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-" Deoplete Python completion
-Plug 'zchee/deoplete-jedi'
-
-" Go
-Plug 'fatih/vim-go'
-Plug 'nsf/gocode', { 'rtp': 'nvim', 'do': '~/.config/nvim/plugged/gocode/nvim/symlink.sh' }
-Plug 'zchee/deoplete-go', { 'do': 'make'}
-
-call plug#end()
-
-" * Customize status line
-let g:lightline = {
-      \ 'colorscheme': 'solarized',
-      \ }
-
-" * Colorization
-set termguicolors
-silent! colorscheme NeoSolarized
-set background=dark
-
-" * Change leader key to ','
+" Leader key
 let mapleader=","
 
-" * Shortcuts
-" Disable Q ex-mode
+" Only load plugins in Neovim
+if !has('nvim')
+    finish
+endif
+
+" Detect server mode (SSH, Docker containers, or no display)
+let g:server_mode = 0
+if !empty($SSH_CONNECTION) || filereadable('/.dockerenv') || empty($DISPLAY)
+    let g:server_mode = 1
+endif
+
+" Bootstrap lazy.nvim
+lua << EOF
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable",
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
+-- Determine if we're in server mode
+local server_mode = vim.g.server_mode == 1
+
+-- Plugin specification
+local plugins = {
+  -- Colorscheme
+  {
+    "morhetz/gruvbox",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      vim.opt.termguicolors = true
+      vim.opt.background = "dark"
+      vim.cmd([[silent! colorscheme gruvbox]])
+    end,
+  },
+
+  -- Lightweight statusline
+  {
+    "itchyny/lightline.vim",
+    enabled = not server_mode,
+    config = function()
+      vim.g.lightline = {
+        colorscheme = 'gruvbox',
+        active = {
+          left = {
+            { 'mode', 'paste' },
+            { 'gitbranch', 'readonly', 'filename', 'modified' }
+          }
+        },
+        component_function = {
+          gitbranch = 'FugitiveHead'
+        },
+      }
+      vim.opt.showmode = false
+    end,
+  },
+
+  -- Git integration
+  {
+    "tpope/vim-fugitive",
+    cmd = { "Git", "Gstatus", "Gblame", "Gpush", "Gpull" },
+  },
+
+  {
+    "airblade/vim-gitgutter",
+    enabled = not server_mode,
+    event = { "BufReadPre", "BufNewFile" },
+  },
+
+  -- Editing enhancements
+  {
+    "tpope/vim-commentary",
+    keys = {
+      { "gc", mode = { "n", "v" } },
+      { "gcc", mode = "n" },
+    },
+  },
+
+  {
+    "tpope/vim-surround",
+    keys = { "ys", "cs", "ds" },
+  },
+
+  {
+    "ntpeters/vim-better-whitespace",
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      vim.g.better_whitespace_enabled = 1
+      vim.g.strip_whitespace_on_save = 1
+      vim.g.strip_whitespace_confirm = 0
+    end,
+  },
+
+  -- FZF integration (uses system fzf installed via apt)
+  {
+    "junegunn/fzf.vim",
+    enabled = not server_mode,
+    cmd = { "Files", "Buffers", "Rg", "Lines" },
+    config = function()
+      -- Use system fzf
+      vim.g.fzf_command_prefix = ''
+    end,
+  },
+
+  -- Language support (lightweight polyglot alternative)
+  {
+    "sheerun/vim-polyglot",
+    event = { "BufReadPre", "BufNewFile" },
+  },
+
+  -- Linting and fixing (disabled in server mode)
+  {
+    "dense-analysis/ale",
+    enabled = not server_mode,
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      vim.g.ale_sign_column_always = 1
+      vim.g.ale_lint_on_text_changed = 'never'
+      vim.g.ale_lint_on_insert_leave = 0
+      vim.g.ale_lint_on_enter = 1
+      vim.g.ale_lint_on_save = 1
+      vim.g.ale_fix_on_save = 1
+
+      vim.g.ale_linters = {
+        python = {'flake8', 'pylint'},
+        go = {'gopls', 'golint'},
+        javascript = {'eslint'},
+        typescript = {'eslint', 'tsserver'},
+      }
+
+      vim.g.ale_fixers = {
+        ['*'] = {'remove_trailing_lines', 'trim_whitespace'},
+        python = {'black', 'isort'},
+        go = {'gofmt', 'goimports'},
+        javascript = {'prettier', 'eslint'},
+        typescript = {'prettier', 'eslint'},
+      }
+    end,
+  },
+
+  -- Go support
+  {
+    "fatih/vim-go",
+    enabled = not server_mode,
+    ft = "go",
+    build = ":GoUpdateBinaries",
+    config = function()
+      vim.g.go_fmt_command = "goimports"
+      vim.g.go_auto_type_info = 1
+      vim.g.go_highlight_functions = 1
+      vim.g.go_highlight_methods = 1
+      vim.g.go_highlight_structs = 1
+      vim.g.go_highlight_operators = 1
+      vim.g.go_highlight_build_constraints = 1
+    end,
+  },
+
+  -- Python support
+  {
+    "vim-python/python-syntax",
+    ft = "python",
+    config = function()
+      vim.g.python_highlight_all = 1
+    end,
+  },
+
+  -- Markdown
+  {
+    "plasticboy/vim-markdown",
+    ft = "markdown",
+    config = function()
+      vim.g.vim_markdown_folding_disabled = 1
+      vim.g.vim_markdown_frontmatter = 1
+    end,
+  },
+
+  -- GPG support
+  {
+    "jamessan/vim-gnupg",
+    ft = "gpg",
+  },
+
+  -- Start screen (disabled in server mode)
+  {
+    "mhinz/vim-startify",
+    enabled = not server_mode,
+  },
+}
+
+-- Setup lazy.nvim
+require("lazy").setup(plugins, {
+  -- Lockfile for reproducibility
+  lockfile = vim.fn.stdpath("config") .. "/lazy-lock.json",
+
+  -- Performance
+  performance = {
+    cache = {
+      enabled = true,
+    },
+    rtp = {
+      disabled_plugins = {
+        "gzip",
+        "matchit",
+        "matchparen",
+        "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
+    },
+  },
+
+  -- UI
+  ui = {
+    border = "rounded",
+  },
+})
+EOF
+
+" Clipboard configuration with OSC 52 support
+" OSC 52 allows clipboard access in remote/container environments with modern terminals
+" Works with: Ghostty, WezTerm, Alacritty, kitty, etc.
+if g:server_mode
+    " Use OSC 52 for clipboard in remote/server mode
+    function! Osc52Yank()
+        " Get the yanked text from the event
+        let text = join(v:event.regcontents, "\n")
+        let encoded = system('base64 -w0', text)
+        let encoded = substitute(encoded, "\n$", "", "")
+        let osc52 = "\e]52;c;" . encoded . "\e\\"
+        " Write directly to stderr for better Docker/terminal compatibility
+        call system('printf "' . osc52 . '" >&2')
+    endfunction
+
+    augroup Osc52Yank
+        autocmd!
+        autocmd TextYankPost * if v:event.operator ==# 'y' | call Osc52Yank() | endif
+    augroup END
+else
+    " Use system clipboard for local sessions
+    set clipboard=unnamedplus
+endif
+
+" Python configuration
+let g:python3_host_prog = '/usr/bin/python3'
+autocmd FileType python setlocal colorcolumn=88
+
+" Key mappings
+" Disable Ex mode
 nnoremap Q <Nop>
 
-" Resume editing from Vim-Vinegar/NetRW
-nnoremap <leader>q :Rex<CR>
-
-" Go to next buffer
-nnoremap <C-i> :bnext<CR>
-
-" Go to previous buffer
-nnoremap <C-u> :bprev<CR>
-
-" Close quickfix easily
-nnoremap <leader>c :cclose<CR>
-
-" Move between windows
+" Better window navigation
+nnoremap <C-h> <C-W>h
 nnoremap <C-j> <C-W>j
 nnoremap <C-k> <C-W>k
-nnoremap <C-h> <C-W>h
 nnoremap <C-l> <C-W>l
 
 " Split windows
 nnoremap <leader>j :sp<CR>
 nnoremap <leader>l :vsp<CR>
 
-" Maximize current window
-nnoremap <C-m> <C-W>_
+" Buffer navigation
+nnoremap <C-i> :bnext<CR>
+nnoremap <C-u> :bprev<CR>
+nnoremap <leader>bd :bdelete<CR>
 
-" Close all but main window
-nnoremap <F4> <C-W>o
+" FZF shortcuts (only if not in server mode)
+if !g:server_mode
+    nnoremap <C-p> :Files<CR>
+    nnoremap <leader>b :Buffers<CR>
+    nnoremap <leader>/ :Rg<CR>
+    nnoremap <leader>l :Lines<CR>
+endif
 
-" FZF shortcut
-nnoremap <C-Home> :FZF<CR>
-
-" Leader when editing a buffer
-" ESC when double leader
-inoremap <leader><leader> <Esc>
+" Quick save and quit
+nmap <leader>w :w!<CR>
+nmap <leader>q :q<CR>
 
 " Remove search highlight
 nnoremap <leader><space> :nohlsearch<CR>
 
-" Fast saving
-nmap <leader>w :w!<cr>
+" ESC with double leader in insert mode
+inoremap <leader><leader> <Esc>
 
-" Send the current line to ZSH
-nnoremap <leader>r :.w !zsh<CR>
+" Copy to system clipboard
+vmap <C-c> "+y
 
-" Delete empty lines
-nmap <leader>del :g/^[<C-I> ]*$/d<C-M>
+" Stay in visual mode after indent
+vnoremap < <gv
+vnoremap > >gv
 
-" Delete comments
-nmap <leader>cdel :g/^#.*$/d<C-M>
+" Move lines up and down
+nnoremap <A-j> :m .+1<CR>==
+nnoremap <A-k> :m .-2<CR>==
+vnoremap <A-j> :m '>+1<CR>gv=gv
+vnoremap <A-k> :m '<-2<CR>gv=gv
 
-" Underline current line
-nmap <leader>udl yyp:.s/./-/<C-M>
-
-" Stay away from the Arrows keys
+" Disable arrow keys to force good habits
 noremap <Up> <NOP>
 noremap <Down> <NOP>
 noremap <Left> <NOP>
 noremap <Right> <NOP>
 
-" * abbreviations
-iab idate <c-r>=strftime("%F")<cr>
+" Close quickfix window
+nnoremap <leader>c :cclose<CR>
 
-" * vim-markdown
-" disable Markdown folding
-let g:vim_markdown_folding_disabled=1
+" Toggle file tree (if using netrw)
+nnoremap <leader>e :Explore<CR>
 
-" * deoplete
-let g:deoplete#enable_at_startup = 1
-if !exists('g:deoplete#omni#input_patterns')
-  let g:deoplete#omni#input_patterns = {}
-endif
-let g:deoplete#sources#jedi#python_path = '/usr/bin/python3'
-" let g:deoplete#disable_auto_complete = 1
-autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
+" Abbreviations
+iab idate <c-r>=strftime("%Y-%m-%d")<cr>
+iab itime <c-r>=strftime("%H:%M:%S")<cr>
+iab idatetime <c-r>=strftime("%Y-%m-%d %H:%M:%S")<cr>
 
-" Python
-let g:jedi#squelch_py_warning = 1
-let g:jedi#force_py_version=3
-autocmd FileType python setlocal omnifunc=jedi#completions
-let g:jedi#completions_enabled = 0
-let g:jedi#auto_vim_configuration = 0
-let g:jedi#smart_auto_mappings = 0
-let g:jedi#show_call_signatures = 0
+" Auto commands
+" Return to last edit position when opening files
+autocmd BufReadPost *
+     \ if line("'\"") > 0 && line("'\"") <= line("$") |
+     \   exe "normal! g`\"" |
+     \ endif
 
-let g:python_version = matchstr(system("python --version 2>&1 | cut -d' ' -f2"), '^[0-9]')
-let s:uname = system("echo -n \"$(uname)\"")
-if !v:shell_error && s:uname == "Linux"
-  let g:has_pyenv = matchstr(system("command -v pyenv >/dev/null 2>&1; echo $?"), '0')
-  if g:has_pyenv =~ 0
-    if g:python_version =~ 3
-      let g:python_host_prog = "/usr/bin/python2"
-    else
-      let g:python3_host_prog = "/usr/bin/python3"
-    endif
-  endif
-else
-  let g:has_pyenv = matchstr(system("command -v pyenv >/dev/null 2>&1; echo $?"), '0')
-  if g:has_pyenv =~ 0
-    if g:python_version =~ 3
-      let g:python_host_prog = "/usr/local/bin/python2"
-    else
-      let g:python3_host_prog = "/usr/local/bin/python3"
-    endif
-  endif
-endif
+" YAML files treated as Ansible
+autocmd BufRead,BufNewFile */playbooks/*.yml set filetype=yaml.ansible
+autocmd BufRead,BufNewFile */roles/*/tasks/*.yml set filetype=yaml.ansible
 
-" YAML
-autocmd FileType yaml set filetype=ansible
-
-" ALE: sign cutter open all the time
-let g:ale_sign_column_always = 1
-
-" TODO * pyflakes (not installed yet)
-highlight SpellBad term=underline gui=undercurl guisp=Red
-
-" GO
-" let g:go_fmt_command = "goimports"
-let g:go_fmt_command = ""
-au FileType go nmap <F1> <Plug>(go-doc)
+" Go key mappings
 au FileType go nmap <F5> <Plug>(go-run)
 au FileType go nmap <F6> <Plug>(go-build)
 au FileType go nmap <F7> <Plug>(go-test)
 au FileType go nmap <F8> <Plug>(go-coverage)
+au FileType go nmap <leader>gd <Plug>(go-doc)
+au FileType go nmap <leader>gi <Plug>(go-info)

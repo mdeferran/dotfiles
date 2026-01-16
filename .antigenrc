@@ -13,7 +13,9 @@ antigen bundle python
 antigen bundle virtualenv
 
 # Antigen Theme
-antigen bundle /home/mdeferran/.zsh/themes/mdeferran --btype=theme --no-local-clone
+antigen bundle $HOME/.zsh/themes/mdeferran --btype=theme --no-local-clone
 antigen theme mdeferran
+
+# antigen theme agnoster
 
 antigen apply

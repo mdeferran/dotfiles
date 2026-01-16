@@ -1,29 +1,100 @@
-# GO
-# GOROOT: where the SDK is located
-# GOPATH: is the root of the workspace
-# export GOROOT=$HOME/Apps/go
+# Go development environment
+
+# Go workspace
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
 
-# Protoc
+# Add user binaries (protoc, etc.)
 export PATH="$PATH:$HOME/.local/bin"
 
-# new project
-newgo() {
-    local name=$1
-    if [ -z $name ]; then
-        echo Missing project name
-        return
-    fi
-    mkdir $name && cd $name
-    [ $? -ne 0 ] && return
-    # Guess module path based on PWD
-    if [ -z "${PWD##*gerrit.internal*}" ] ;then
-         go mod init ${PWD##${PWD%%gerrit.internal*}}
-    else
-        echo go mod init yourself
-    fi
-    echo "copy Makefile Dockerfile"  # cookie-cutter or git seed?
-    git init && git add -A && git commit --allow-empty -m "Initial commit"
-    echo "add dependency with: go get -u module_path"
+# Create new Go project with module initialization
+function newgo() {
+  local name=$1
+
+  if [[ -z "$name" ]]; then
+    echo "Usage: newgo <project-name>"
+    return 1
+  fi
+
+  if ! command -v go &> /dev/null; then
+    echo "Error: Go is not installed"
+    return 1
+  fi
+
+  mkdir -p "$name" && cd "$name" || return 1
+
+  # Initialize git repository
+  git init
+
+  # Prompt for module path
+  echo "Initialize Go module. Examples:"
+  echo "  github.com/username/$name"
+  echo "  gitlab.com/username/$name"
+  echo "  $name (simple module name)"
+  echo
+  read -r "?Enter module path: " module_path
+
+  if [[ -n "$module_path" ]]; then
+    go mod init "$module_path"
+  else
+    go mod init "$name"
+  fi
+
+  # Create basic main.go
+  cat > main.go <<'EOF'
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello, World!")
 }
+EOF
+
+  # Create basic .gitignore
+  cat > .gitignore <<'EOF'
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary and coverage
+*.test
+*.out
+coverage.txt
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+EOF
+
+  echo
+  echo "✓ Created Go project: $name"
+  echo "✓ Initialized Git repository"
+  echo "✓ Created go.mod with module: ${module_path:-$name}"
+  echo "✓ Created main.go and .gitignore"
+  echo
+  echo "Next steps:"
+  echo "  go run main.go          # Run the project"
+  echo "  go build                # Build binary"
+  echo "  go test ./...           # Run tests"
+  echo "  go get <package>        # Add dependencies"
+}
+
+# Go aliases
+alias got='go test ./...'
+alias gob='go build'
+alias gor='go run'
+alias gom='go mod'
+alias gof='go fmt ./...'
+alias gomt='go mod tidy'

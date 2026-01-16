@@ -3,110 +3,121 @@
     name = Manuel DE FERRAN
 
 [alias]
+    # Short forms
     st = status
     stp = status --porcelain
     ci = commit
     br = branch
     co = checkout
-    rz = reset --hard HEAD
     unstage = reset HEAD
+
+    # Reset hard
+    rz = reset --hard HEAD
+
+    # Log and diff helpers
+    lg = log --graph --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ar)%Creset'
+    ll = lg -n 10
+    lga = lg --all
     lpush = "!git lg @{u}..HEAD"
     lpull = "!git lg HEAD..@{u}"
     whatsnew = "!git diff @{u}...HEAD"
     whatscoming = "!git diff HEAD...@{u}"
-    brbydate = "!git for-each-ref --count=30 --sort=-committerdate refs/heads/ --format='%(committerdate)/%(authorname)/%(refname:short)' | column -s '/' -t"
-    lg = log --graph --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ar)%Creset'
-    ll = lg -n 10
-    ignore = "!gi() { curl -L -s https://www.toptal.com/developers/gitignore/api/$@ ;}; gi"
+
+    # Branch management
+    brbydate = "!git for-each-ref --count=30 --sort=-committerdate refs/heads/ --format='%(committerdate:short) %(authorname) %(refname:short)' | column -t"
+    brcurrent = rev-parse --abbrev-ref HEAD
+    brclean = "!git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -r git branch -d"
+
+    # Commit navigation
     n = "!git log --reverse --pretty=%H master | grep -A 1 $(git rev-parse HEAD) | tail -n1 | xargs git checkout"
     p = "!git checkout HEAD^1"
 
+    # Tools
+    ignore = "!gi() { curl -L -s https://www.toptal.com/developers/gitignore/api/$@ ;}; gi"
+
+    # Maintenance
+    cleanup = "!git reflog expire --expire=now --all && git gc --prune=now --aggressive"
+
 [color]
+    ui = auto
     branch = auto
     diff = auto
     status = auto
     interactive = auto
-    ui = auto
+
+[color "branch"]
+    upstream = cyan
 
 [core]
-    excludesfile = /home/mdeferran/.gitignore_global
+    editor = nvim
     pager = less -R -F -X -i
-    #
-    # Out of luck: on Windows w/o msysGit? You may have Notepad++…
-    # editor = 'C:/Program Files/Notepad++/notepad++.exe' -multiInst -notabbar -nosession -noPlugin
-    #
-    # If you want to use Sublime Text 2's subl wrapper:
-    # editor = subl -w
-    #
     whitespace = -trailing-space
+    excludesfile = ~/.gitignore_global
 
-    # Smth to try when facing "out of memory - suboptimal pack"
-    # packedgitlimit = 256m
-    # packedgitwindowsize = 32m
-
-[http]
-    sslVerify = false
+[init]
+    defaultBranch = main
 
 [diff]
     mnemonicPrefix = true
     renames = true
     wordRegex = .
     tool = vimdiff
+    algorithm = histogram
 
 [fetch]
     recurseSubmodules = on-demand
+    prune = true
 
-[grep]
-    extendedRegexp = true
+[pull]
+    rebase = true
 
-[log]
-    abbrevCommit = true
+[push]
+    default = current
+    autoSetupRemote = true
+
+[rebase]
+    autoStash = true
+    autoSquash = true
 
 [merge]
     conflictStyle = diff3
+    tool = vimdiff
 
 [mergetool]
     keepBackup = false
     keepTemporaries = false
     prompt = false
 
-[pull]
-    # This is GREAT… when you know what you're doing and are careful
-    # not to pull --no-rebase over a local line containing a true merge.
-    # rebase = true
-    # WARNING! This option, which does away with the one gotcha of
-    # auto-rebasing on pulls, is only available from 1.8.5 onwards.
-    rebase = true
+[grep]
+    lineNumber = true
+    extendedRegexp = true
 
-[push]
-    default = upstream
-
-[rerere]
-    # If, like me, you like rerere, decomment these
-    # autoupdate = true
-    # enabled = true
+[log]
+    abbrevCommit = true
+    date = relative
 
 [status]
     submoduleSummary = true
     showUntrackedFiles = all
 
-[color "branch"]
-    upstream = cyan
-
 [tag]
     sort = version:refname
 
+[credential]
+    helper = cache --timeout 7200
+
+[gc]
+    autoDetach = false
+    pruneExpire = now
+
+# Gerrit integration (customize as needed)
 [gitreview]
     remote = origin
     username = manuel.deferran
 
-[credential]
-	helper = cache --timeout 3600
-[gc]
-	autoDetach = false
-	pruneExpire = now
+# URL rewrites for internal Gerrit servers
 [url "ssh://admin@gerrit.localhost"]
-	insteadOf = http://gerrit.localhost/a
+    insteadOf = http://gerrit.localhost/a
 
 [url "ssh://gerrit.internal.famoco.com"]
 	insteadOf = https://gerrit.internal.famoco.com/a
