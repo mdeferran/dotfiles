@@ -113,6 +113,39 @@ fi
 # Bash completion support
 autoload -U +X bashcompinit && bashcompinit
 
+# Docker completion (if installed)
+if command -v docker &> /dev/null; then
+  # Cache docker completion for faster shell startup
+  DOCKER_COMPLETION_CACHE="${HOME}/.docker/completion.zsh"
+  if [ ! -f "$DOCKER_COMPLETION_CACHE" ] || [ ! -s "$DOCKER_COMPLETION_CACHE" ]; then
+    mkdir -p "${HOME}/.docker"
+    # Try to get completion from docker CLI
+    if docker completion zsh > "${DOCKER_COMPLETION_CACHE}" 2>/dev/null; then
+      source "$DOCKER_COMPLETION_CACHE"
+    else
+      # Fallback: download from Docker's GitHub if docker completion command not available
+      curl -fsSL https://raw.githubusercontent.com/docker/cli/master/contrib/completion/zsh/_docker \
+        -o "${DOCKER_COMPLETION_CACHE}" 2>/dev/null && source "$DOCKER_COMPLETION_CACHE"
+    fi
+  else
+    source "$DOCKER_COMPLETION_CACHE"
+  fi
+
+  # Helper function to regenerate docker completion cache
+  docker-regen-completion() {
+    echo "Regenerating docker completion cache..."
+    mkdir -p "${HOME}/.docker"
+    if docker completion zsh > "${HOME}/.docker/completion.zsh" 2>/dev/null; then
+      echo "Done! Restart your shell to use the new completion."
+    else
+      echo "Downloading completion from Docker repository..."
+      curl -fsSL https://raw.githubusercontent.com/docker/cli/master/contrib/completion/zsh/_docker \
+        -o "${HOME}/.docker/completion.zsh"
+      echo "Done! Restart your shell to use the new completion."
+    fi
+  }
+fi
+
 # Vault completion (if installed)
 if command -v vault &> /dev/null; then
   complete -o nospace -C $(which vault) vault
