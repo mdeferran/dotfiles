@@ -157,3 +157,10 @@ fi
 if [[ $ZSHRC_PROFILE -eq 1 ]]; then
   zprof
 fi
+
+# bun completions
+[ -s "/home/mdeferran/.bun/_bun" ] && source "/home/mdeferran/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
