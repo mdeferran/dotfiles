@@ -176,6 +176,10 @@ setup_base() {
         ripgrep
         fd-find
         fzf
+        bat
+        eza
+        jq
+        yq
 
         # Network tools
         openssh-client
