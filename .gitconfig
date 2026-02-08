@@ -38,6 +38,8 @@
     # Maintenance
     cleanup = "!git reflog expire --expire=now --all && git gc --prune=now --aggressive"
 
+    ls = log --decorate --stat
+
 [color]
     ui = auto
     branch = auto
@@ -50,9 +52,9 @@
 
 [core]
     editor = nvim
-    pager = less -R -F -X -i
     whitespace = -trailing-space
     excludesfile = ~/.gitignore_global
+    pager = delta
 
 [init]
     defaultBranch = main
@@ -61,8 +63,16 @@
     mnemonicPrefix = true
     renames = true
     wordRegex = .
-    tool = vimdiff
     algorithm = histogram
+    colorMoved = default
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true    # use n and N to move between diff sections
+    light = false      # set to true if you're in a light terminal theme
+
 
 [fetch]
     recurseSubmodules = on-demand
