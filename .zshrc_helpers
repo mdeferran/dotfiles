@@ -14,16 +14,20 @@ fi
 if command -v fdfind &> /dev/null; then
   alias fd='fdfind'
 fi
+# search PATTERN in *log under /var/log: fd -e log 'PATTERN' /var/log
+# find -exec grep pattern => rg -n 'TODO' -g '*.py' -g '*.sh' .
 
-# Inline aliases for less and grep
-alias -g G='| grep -'
-alias -g L='| less'
-alias -g J='| jq'
+# Inline aliases for less and grep: ps awwx G ssh
+alias -g G='| rg'
+alias -g L='| less -FRX'
+alias -g J='| jq -C'
+alias -g E='2>&1 |'
+alias -g C='| xclip -selection clipboard'
 
-# List aliases
-alias ll='ls -alrt'
-alias la='ls -A'
-alias l='ls -CF'
+# List aliases (eza)
+alias ll='eza -al --sort=modified --reverse'
+alias la='eza -A'
+alias l='eza -CF'
 
 # Modern find alternatives (if fd not installed, fallback to find)
 if ! command -v fd &> /dev/null && ! command -v fdfind &> /dev/null; then
@@ -77,34 +81,6 @@ function cdd() {
   mkdir -p "$dir" && cd "$dir"
 }
 
-# OpenVPN helper functions
-function _vpn() {
-  local profile=$1
-  local conf_file=$(find "$HOME/.openvpn/$profile/" -regex ".*\.\(conf\|ovpn\)$" -print -quit 2>/dev/null)
-
-  if [[ -z "$conf_file" ]]; then
-    echo "No config file found for profile: $profile"
-    return 1
-  fi
-
-  if ! pgrep -f "$conf_file" > /dev/null; then
-    sudo openvpn --daemon --config "$conf_file"
-  else
-    echo "VPN profile '$profile' is already running"
-  fi
-}
-
-function vpn() {
-  if [[ $# -eq 0 ]]; then
-    echo "Usage: vpn <profile1> [profile2 ...]"
-    return 1
-  fi
-
-  for profile in "$@"; do
-    _vpn "$profile"
-  done
-}
-
 # AWS EC2 helper functions
 function ec2byprivip() {
   local ip=$1
@@ -129,14 +105,3 @@ function ec2all() {
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-
-# Git helpers (additional to .gitconfig aliases)
-alias gs='git status'
-alias gd='git diff'
-alias ga='git add'
-alias gc='git commit'
-alias gp='git push'
-alias gl='git pull'
-alias gco='git checkout'
-alias gb='git branch'
-alias glog='git log --oneline --graph --decorate'
