@@ -206,6 +206,9 @@ setup_base() {
     # Setup Ghostty (check if available)
     setup_ghostty
 
+    # Setup git-delta (modern diff viewer)
+    setup_delta
+
     log_info "Base setup complete!"
 }
 
@@ -346,6 +349,37 @@ setup_fonts() {
     fi
 
     log_info "Fonts setup complete!"
+}
+
+# Install git-delta (modern diff viewer)
+setup_delta() {
+    log_info "Setting up git-delta..."
+
+    # Check if already installed
+    if command -v delta &> /dev/null; then
+        log_info "git-delta is already installed"
+        return 0
+    fi
+
+    # Get the latest version tag
+    log_info "Fetching latest git-delta release..."
+    local version
+    version=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+
+    if [ -z "$version" ]; then
+        log_error "Failed to fetch git-delta version"
+        return 1
+    fi
+
+    log_info "Installing git-delta ${version}..."
+
+    # Download and install
+    local deb_file="git-delta_${version}_amd64.deb"
+    wget "https://github.com/dandavison/delta/releases/download/${version}/${deb_file}"
+    sudo dpkg -i "${deb_file}"
+    rm "${deb_file}"
+
+    log_info "git-delta setup complete!"
 }
 
 # Install Docker
