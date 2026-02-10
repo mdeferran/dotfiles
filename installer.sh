@@ -180,6 +180,7 @@ setup_base() {
         eza
         jq
         yq
+        just
 
         # Network tools
         openssh-client
