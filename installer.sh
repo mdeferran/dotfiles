@@ -297,7 +297,7 @@ setup_python() {
         uv tool install flake8
         uv tool install pylint
         uv tool install isort
-        uv tool install mypy
+        uv tool install ty
         uv tool install ruff
     else
         log_warn "uv installation failed, skipping tool installation"

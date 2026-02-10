@@ -7,25 +7,24 @@ alias dload="curl --remote-name --progress-bar --location"
 alias please='sudo $(fc -ln -1)'
 
 # Modern tool aliases (ripgrep, fd-find)
-if command -v rg &> /dev/null; then
-  alias grep='rg'
-fi
-
 if command -v fdfind &> /dev/null; then
   alias fd='fdfind'
 fi
+
+alias rg="rg --hidden"
+
 # search PATTERN in *log under /var/log: fd -e log 'PATTERN' /var/log
 # find -exec grep pattern => rg -n 'TODO' -g '*.py' -g '*.sh' .
 
 # Inline aliases for less and grep: ps awwx G ssh
-alias -g G='| rg'
+alias -g G='| grep'
 alias -g L='| less -FRX'
 alias -g J='| jq -C'
 alias -g E='2>&1 |'
 alias -g C='| xclip -selection clipboard'
 
 # List aliases (eza)
-alias ll='eza -al --sort=modified --reverse'
+alias ll='eza -al --sort=modified'
 alias la='eza -A'
 alias l='eza -CF'
 
@@ -105,3 +104,6 @@ function ec2all() {
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
+
+# OpenCode
+alias oc='opencode'
