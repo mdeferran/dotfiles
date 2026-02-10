@@ -214,6 +214,9 @@ setup_base() {
     # Setup git-delta (modern diff viewer)
     setup_delta
 
+    # Setup ast-grep (AST-based code searching)
+    setup_ast_grep
+
     log_info "Base setup complete!"
 }
 
@@ -385,6 +388,40 @@ setup_delta() {
     rm "${deb_file}"
 
     log_info "git-delta setup complete!"
+}
+
+# Install ast-grep (AST-based code searching and rewriting)
+setup_ast_grep() {
+    log_info "Setting up ast-grep..."
+
+    # Check if already installed
+    if command -v ast-grep &> /dev/null; then
+        log_info "ast-grep is already installed"
+        return 0
+    fi
+
+    # Get the latest version tag
+    log_info "Fetching latest ast-grep release..."
+    local version
+    version=$(curl -fsSL https://api.github.com/repos/ast-grep/ast-grep/releases/latest | grep -oP '"tag_name": "\K[^"]+')
+
+    if [ -z "$version" ]; then
+        log_error "Failed to fetch ast-grep version"
+        return 1
+    fi
+
+    log_info "Installing ast-grep ${version}..."
+
+    # Download and install
+    local arch="x86_64"
+    local zip_file="ast-grep.zip"
+    curl -fsSL -o "${zip_file}" "https://github.com/ast-grep/ast-grep/releases/download/${version}/app-x86_64-unknown-linux-gnu.zip"
+    unzip -q "${zip_file}" sg
+    sudo mv sg /usr/local/bin/ast-grep
+    sudo chmod +x /usr/local/bin/ast-grep
+    rm -f "${zip_file}"
+
+    log_info "ast-grep setup complete!"
 }
 
 # Install Docker
