@@ -1,42 +1,63 @@
-# Ghostty terminal configuration for Ubuntu 24.04/25.04
+# ~/.config/ghostty/config
+# Merged configuration (conf1 baseline, selected items from conf2)
 
-# Font configuration with FiraCode
+# Ghostty 1.2.3 (Ubuntu, X11+i3)
+
+# --- Font ---
 font-family = "FiraCode Nerd Font"
-font-size = 11
-font-feature = -calt
-font-feature = +ss01
-font-feature = +ss02
-font-feature = +ss03
-font-feature = +ss05
+font-size = 10.0
 
-# Theme and colors (Gruvbox Dark)
-theme = gruvbox-dark
-background-opacity = 0.95
+# (conf2 had extra font features; omitted per your choices)
+# font-feature = -calt
+# font-feature = +ss01
+# font-feature = +ss02
+# font-feature = +ss03
+# font-feature = +ss05
 
-# Window configuration
+# --- Terminal compatibility ---
+term = xterm-256color
+
+# --- Window ---
 window-padding-x = 4
 window-padding-y = 4
-window-decoration = true
 
-# Cursor
+# Decorations / titlebar (conf1)
+gtk-titlebar = false
+window-decoration = false
+
+# --- Cursor ---
 cursor-style = block
-cursor-style-blink = true
 
-# Shell integration
-shell-integration = zsh
-shell-integration-features = cursor,sudo,title
+# --- Scrollback ---
+scrollback-limit = 1073741824
 
-# Mouse
-mouse-hide-while-typing = true
-copy-on-select = clipboard
+# --- Theme / background ---
+# Use theme "gruvbox-daek-hard" at full opacity.
+theme = Gruvbox Dark Hard
+background-opacity = 1.0
 
-# Scrollback
-scrollback-limit = 50000
+# If the theme is missing, install it by placing a theme file named exactly:
+#   ~/.config/ghostty/themes/gruvbox-daek-hard
+#
+# Minimal check:
+#   ls -l ~/.config/ghostty/themes/gruvbox-daek-hard
+#
+# Note: if you meant "gruvbox-dark-hard" (spelling), rename the file and update theme= accordingly.
 
-# Performance
-sync-to-monitor = true
+# conf1 explicit colors (not used when theme is set; keep commented as fallback)
+# background = "#0b0f14"
+# foreground = "#e6edf3"
 
-# Keybindings (vim-like)
+# --- Clipboard ---
+clipboard-paste-protection = false
+
+# --- Performance ---
+# sync-to-monitor = true  # conf2; your Ghostty reported "unknown field" so it stays commented out
+
+# --- URLs ---
+link-url = true
+
+# --- Keybindings ---
 keybind = ctrl+shift+c=copy_to_clipboard
 keybind = ctrl+shift+v=paste_from_clipboard
 keybind = ctrl+shift+n=new_window
@@ -54,5 +75,4 @@ keybind = ctrl+plus=increase_font_size:1
 keybind = ctrl+minus=decrease_font_size:1
 keybind = ctrl+0=reset_font_size
 
-# URLs
-link-url = true
+keybind = ctrl+slash=text:f=$(fzf --prompt='copy> '); [ -n \"$f\" ] && xclip -selection clipboard < \"$f\"\r
