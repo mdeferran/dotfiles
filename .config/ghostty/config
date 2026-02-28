@@ -76,3 +76,4 @@ keybind = ctrl+minus=decrease_font_size:1
 keybind = ctrl+0=reset_font_size
 
 keybind = ctrl+slash=text:f=$(fzf --prompt='copy> '); [ -n \"$f\" ] && xclip -selection clipboard < \"$f\"\r
+keybind = ctrl+shift+slash=text:f=$(fzf --prompt='enc/dec> '); [ -n \"$f\" ] && if [[ \"$f\" == *.gpg ]]; then gpg -d \"$f\" > \"${f%.gpg}\"; else gpg -ea -r me < \"$f\" > \"$f.gpg\"; fi\r
