@@ -424,6 +424,34 @@ setup_ast_grep() {
     log_info "ast-grep setup complete!"
 }
 
+# Install glow (markdown renderer)
+setup_glow() {
+    log_info "Setting up glow..."
+
+    # Check if already installed
+    if command -v glow &> /dev/null; then
+        log_info "glow is already installed"
+        return 0
+    fi
+
+    # Add Charm's official GPG key
+    sudo install -m 0755 -d /etc/apt/keyrings
+    if [ ! -f /etc/apt/keyrings/charm.gpg ]; then
+        curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+        sudo chmod a+r /etc/apt/keyrings/charm.gpg
+    fi
+
+    # Add repository
+    echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | \
+        sudo tee /etc/apt/sources.list.d/charm.list > /dev/null
+
+    # Install glow
+    sudo apt update
+    install_packages glow
+
+    log_info "glow setup complete!"
+}
+
 # Install Docker
 setup_docker() {
     log_info "Setting up Docker..."
