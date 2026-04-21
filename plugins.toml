@@ -12,10 +12,6 @@ dir = "lib"
 use = ["{async_prompt,bzr,cli,clipboard,compfix,completion,correction,diagnostics,directories,functions,git,grep,history,key-bindings,misc,nvm,prompt_info_functions,spectrum,termsupport,theme-and-appearance,vcs_info}.zsh"]
 
 # Oh-My-Zsh plugins
-[plugins.oh-my-zsh-tmux]
-github = "ohmyzsh/ohmyzsh"
-dir = "plugins/tmux"
-
 [plugins.oh-my-zsh-git]
 github = "ohmyzsh/ohmyzsh"
 dir = "plugins/git"

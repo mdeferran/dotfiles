@@ -197,6 +197,7 @@ setup_base() {
 
         # Fonts
         fonts-firacode
+        fonts-noto-color-emoji
     )
 
     install_packages "${packages[@]}"

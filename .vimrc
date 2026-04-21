@@ -309,6 +309,12 @@ else
     set clipboard=unnamedplus
 endif
 
+" Sync PRIMARY and CLIPBOARD
+augroup sync_clipboards
+    autocmd!
+    autocmd TextYankPost * if v:event.operator ==# 'y' && v:event.regname ==# '' | call setreg('*', getreg('+')) | endif
+augroup END
+
 " Python configuration
 let g:python3_host_prog = '/usr/bin/python3'
 autocmd FileType python setlocal colorcolumn=88

@@ -26,7 +26,7 @@ alias -g C='| xclip -selection clipboard'
 # List aliases (eza)
 alias ll='eza -al --sort=modified'
 alias la='eza -A'
-alias l='eza -CF'
+alias l='eza -GF'
 
 # Modern find alternatives (if fd not installed, fallback to find)
 if ! command -v fd &> /dev/null && ! command -v fdfind &> /dev/null; then
@@ -107,3 +107,20 @@ alias ....='cd ../../..'
 
 # OpenCode
 alias oc='opencode'
+
+# Diceware
+alias dw="diceware -n 2 -s 2"
+
+# Alias to ignore Host key
+alias ossh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+# Alias for ping -c 1
+alias p1="ping -c 1"
+
+# Function to remind git submodules command
+function remind_submodules() {
+  echo "git submodule update --init : to get the submodule if you clone w/o it"
+  echo "git clone --recurse-submodules <git repo url> : clone with submodules"
+}
+
+# TODO add light clone function with git clone --depth 1 --single-branch --branch main GIT_URL TARGET_DIR

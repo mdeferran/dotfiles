@@ -77,3 +77,11 @@ keybind = ctrl+0=reset_font_size
 
 keybind = ctrl+slash=text:f=$(fzf --prompt='copy> '); [ -n \"$f\" ] && xclip -selection clipboard < \"$f\"\r
 keybind = ctrl+shift+slash=text:f=$(fzf --prompt='enc/dec> '); [ -n \"$f\" ] && if [[ \"$f\" == *.gpg ]]; then gpg -d \"$f\" > \"${f%.gpg}\"; else gpg -ea -r me < \"$f\" > \"$f.gpg\"; fi\r
+keybind = ctrl+shift+backspace=text:f=$(fzf --prompt='md> ') && markdown_me -O "$f"\r
+
+keybind = ctrl+enter=unbind
+
+keybind = shift+enter=text:\x1b\r
+
+# Fix Claude Code shift space issue
+keybind = shift+space=text:\x20
