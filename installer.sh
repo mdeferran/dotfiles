@@ -81,7 +81,7 @@ link_dotfiles() {
 
     local files=(
         .zshrc .zshrc_helpers .zshrc_python .zshrc_go .zshrc_gpg .zshrc_ops
-        .gitconfig .tmux.conf .vimrc
+        .gitconfig .tmux.conf .vimrc .zshrc_cenv
     )
 
     # Create backup directory if any files exist

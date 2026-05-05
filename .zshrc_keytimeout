@@ -1,0 +1,4 @@
+# Use emacs mode (standard keybindings, no vi mode)
+bindkey -e
+
+# No need for KEYTIMEOUT in emacs mode - it's only for vi mode key sequences

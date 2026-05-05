@@ -124,3 +124,5 @@ function remind_submodules() {
 }
 
 # TODO add light clone function with git clone --depth 1 --single-branch --branch main GIT_URL TARGET_DIR
+#
+# TODO add git-scaffolding git archive --remote=https://github.com/USER/REPO.git abc1234 | tar -x
