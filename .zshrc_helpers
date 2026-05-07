@@ -123,6 +123,24 @@ function remind_submodules() {
   echo "git clone --recurse-submodules <git repo url> : clone with submodules"
 }
 
+# Markdown Viewer
+mdv() {
+    local viewer="$HOME/.md_viewer/index.html"
+    if [[ ! -f "$viewer" ]]; then
+        echo "Error: Markdown viewer not installed. Run 'just install' in the md-viewer directory."
+        return 1
+    fi
+
+    if [[ -n "$1" ]]; then
+        # Base64 encode the markdown file content
+        local content=$(base64 -w 0 "$1")
+        xdg-open "file://$viewer#content=$content" 2>/dev/null || open "file://$viewer#content=$content"
+    else
+        # Open viewer without a file (shows empty state with folder picker)
+        xdg-open "file://$viewer" 2>/dev/null || open "file://$viewer"
+    fi
+}
+
 # TODO add light clone function with git clone --depth 1 --single-branch --branch main GIT_URL TARGET_DIR
 #
 # TODO add git-scaffolding git archive --remote=https://github.com/USER/REPO.git abc1234 | tar -x

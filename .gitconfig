@@ -131,3 +131,5 @@
 
 [url "ssh://gerrit.internal.famoco.com"]
 	insteadOf = https://gerrit.internal.famoco.com/a
+[url "ssh://git@forgejo.local/"]
+	insteadOf = https://forgejo.local/

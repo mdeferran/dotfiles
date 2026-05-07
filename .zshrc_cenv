@@ -1,3 +1,4 @@
-source /home/mdeferran/checkouts/glowenv/ZSH-ALTERNATIVE/lib/cenv-native.zsh
-source /home/mdeferran/checkouts/glowenv/ZSH-ALTERNATIVE/lib/cenv-prompt.zsh
-export CENV_CONFIG_FILE="$HOME/.cenv/profiles.zsh"
+source /home/mdeferran/.cenv/cenv-native.zsh
+source /home/mdeferran/.cenv/cenv-prompt.zsh
+
+alias ctx='cenv'
